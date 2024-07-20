@@ -686,6 +686,8 @@ def main():
             available_balance_before = balance_info['availableBalance']  # asumsikan ini mengambil nilai dari JSON
             balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
             print(f"======== Account {index+1} ========")
+            if balance_info.get('playPasses') <= 0:
+                print('No have ticket For Playing games')
             while balance_info['playPasses'] > 0:
                 now = datetime.now().isoformat(" ").split(".")[0]
                 print(f"[{now}] Play Game : Playing game...")
