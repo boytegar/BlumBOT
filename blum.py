@@ -490,8 +490,6 @@ def check_tribe(token):
         if response.status_code == 200:
             return response.json()
         else:
-            js = response.json()
-            print(js.get('message'))
             return None
     except requests.exceptions.ConnectionError as e:
         print(f"Gagal mengklaim saldo teman karena masalah koneksi: {e}")
