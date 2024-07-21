@@ -534,7 +534,7 @@ cek_task_enable = args.task
 claim_ref_enable = args.reff
 
 def main():
-    tokens = []
+    
     print(r"""
               
             Created By Snail S4NS Group
@@ -543,6 +543,7 @@ def main():
               
           """)
     while True:
+        tokens = []
         queries = load_credentials()
         delay_time = random.randint(28800, 29300)
         start_time = time.time()
