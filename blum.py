@@ -291,7 +291,7 @@ def claim_game(token, game_id, points):
     headers["origin"] = "https://telegram.blum.codes"
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
-    data = '{"gameId":"'+game_id+'","points":'+str(points)+'}'
+    data = f'{{"gameId":"{game_id}","points":{points}}}'
 
     try:
         resp = requests.post(url, headers=headers, data=data)
@@ -304,10 +304,15 @@ def claim_game(token, game_id, points):
 
 def get_game_id(token):
     game_response = play_game(token)
+    trying = 5
     while game_response is None or game_response.get('gameId') is None:
+        if trying == 0:
+            break
         print("Play Game : Game ID is None, retrying...")
         time.sleep(3)
         game_response = play_game(token)
+        trying -= 1
+        return game_response['gameId']
     return game_response['gameId']
 
 def claim_balance(token):
@@ -604,14 +609,14 @@ def main():
                             if start_response:
                                 print(f"[{now}] Claim Balance : Farming started.", flush=True)
                             else:
-                                print(f"[{now}] Claim Balance : Gagal start farming", start_response, flush=True)
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
                         else:
-                            print(f"[{now}] Claim Balance : Gagal claim", claim_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed claim", claim_response, flush=True)
                             start_response = start_farming(token)
                             if start_response:
                                 print(f"[{now}] Claim Balance : Farming started.", flush=True)
                             else:
-                                print(f"[{now}] Claim Balance : Gagal start farming", start_response, flush=True)
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
                 else:
                     print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming", flush=True)
                     print(f"[{now}] Claim Balance : Claiming balance...")
@@ -623,26 +628,26 @@ def main():
                         if start_response:
                             print(f"[{now}] Claim Balance : Farming started.", flush=True)
                         else:
-                            print(f"[{now}] Claim Balance : Gagal start farming", start_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
                     else:
                         print(f"[{now}] Claim Balance : Gagal claim", claim_response, flush=True)
                         start_response = start_farming(token)
                         if start_response:
                             print(f"[{now}] Claim Balance : Farming started.", flush=True)
                         else:
-                            print(f"[{now}] Claim Balance : Gagal start farming", start_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
 
             print(f"[{now}] Daily Reward : Checking daily reward...")
             daily_reward_response = check_daily_reward(token)
             if daily_reward_response is None:
-                print(f"[{now}] Daily Reward : Gagal cek hadiah harian", flush=True)
+                print(f"[{now}] Daily Reward : Failed Check Daily Reward.", flush=True)
             else:
                 if daily_reward_response.get('message') == 'same day':
-                    print(f"[{now}] Daily Reward : Hadiah harian sudah diklaim hari ini", flush=True)
+                    print(f"[{now}] Daily Reward : Daily Reward Claimed", flush=True)
                 elif daily_reward_response.get('message') == 'OK':
-                    print(f"[{now}] Daily Reward : Hadiah harian berhasil diklaim!", flush=True)
+                    print(f"[{now}] Daily Reward : Daily Reward Done Claim!", flush=True)
                 else:
-                    print(f"[{now}] Daily Reward : Gagal cek hadiah harian. {daily_reward_response}", flush=True)
+                    print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}", flush=True)
 
             if cek_task_enable == 'y':
                 if query_id not in checked_tasks or not checked_tasks[query_id]:
@@ -684,7 +689,7 @@ def main():
         for index, token in enumerate(tokens):
             time.sleep(3)
             balance_info = get_balance(token)
-            available_balance_before = balance_info['availableBalance']  # asumsikan ini mengambil nilai dari JSON
+            available_balance_before = balance_info['availableBalance'] 
             balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
             print(f"======== Account {index+1} ========")
             if balance_info.get('playPasses') <= 0:
@@ -694,52 +699,53 @@ def main():
                 print(f"[{now}] Play Game : Playing game...")
                 gameId = get_game_id(token)
                 print(f"[{now}] Play Game : Checking game...")
-                taps = random.randint(213, 250)
-                claim_response = claim_game(token, gameId, taps)
-                delays = 50
+                taps = random.randint(230, 250)
+                delays = random.randint(30, 40)
                 time.sleep(delays)
+                claim_response = claim_game(token, gameId, taps)
                 if claim_response is None:
-                    print(f"[{now}] Play Game : Gagal mengklaim game, mencoba lagi...", flush=True)
+                    print(f"[{now}] Play Game : Game still running waiting...", flush=True)
                 while True:
                     if claim_response.text == '{"message":"game session not finished"}':
-                        time.sleep(10)  # Tunggu sebentar sebelum mencoba lagi
-                        print(f"[{now}] Play Game : Game belum selesai.. mencoba lagi", flush=True)
+                        time.sleep(10)  
+                        print(f"[{now}] Play Game : Game still running waiting....", flush=True)
                         claim_response = claim_game(token, gameId, taps)
                         if claim_response is None:
-                            print(f"[{now}] Play Game : Gagal mengklaim game, mencoba lagi...", flush=True)
+                            print(f"[{now}] Play Game : Failed Claim game point, trying...", flush=True)
                     elif claim_response.text == '{"message":"game session not found"}':
-                        print(f"[{now}] Play Game : Game sudah berakhir", flush=True)
+                        print(f"[{now}] Play Game : Game is Done", flush=True)
                         break
                     elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
-                        print(f"[{now}] Play Game : Token tidak valid, mendapatkan token baru...")
-                        token = get_new_token(query_id)  # Asumsi query_id tersedia di scope ini
-                        continue  # Kembali ke awal loop untuk mencoba lagi dengan token baru
+                        print(f"[{now}] Play Game : Token Not Valid, Take new token...")
+                        token = get_new_token(query_id)
+                        continue  
                     else:
-                        print(f"Play Game : Game selesai: {claim_response.text}", flush=True)
+                        print(f"Play Game : Game is Done: {claim_response.text}", flush=True)
                         break
-                # Setelah klaim game, cek lagi jumlah tiket
+               
                 balance_info = get_balance(token) 
-                if balance_info is None: # Refresh informasi saldo untuk mendapatkan tiket terbaru
+                if balance_info is None: 
                     print(f"[{now}] Play Game Gagal mendapatkan informasi tiket", flush=True)
                 else:
-                    available_balance_after = balance_info['availableBalance']  # asumsikan ini mengambil nilai dari JSON
+                    available_balance_after = balance_info['availableBalance'] 
                     before = float(available_balance_before) 
                     after =  float(available_balance_after)
-                    # balance_after = f"{float(available_balance):,.0f}".replace(",", ".")
-                    total_balance = after - before  # asumsikan ini mengambil
+                   
+                    total_balance = after - before  
                     print(f"[{now}] Play Game: You Got Total {total_balance} From Playing Game", flush=True)
                     if balance_info['playPasses'] > 0:
-                        print(f"[{now}] Play Game : Tiket masih tersedia, memainkan game lagi...", flush=True)
-                        continue  # Lanjutkan loop untuk memainkan game lagi
+                        print(f"[{now}] Play Game : Tiket still ready, Playing game again...", flush=True)
+                        continue  
                     else:
-                        print(f"[{now}] Play Game : Tidak ada tiket tersisa.", flush=True)
+                        print(f"[{now}] Play Game : Tiket Finished.", flush=True)
                         break
             end_time = time.time()
 
         print(f"========= ALL ID DONE =========")
         waktu_tunggu = delay_time - (end_time-start_time)
         printdelay(waktu_tunggu)
-        time.sleep(waktu_tunggu)
+        if waktu_tunggu >= 0:
+            time.sleep(waktu_tunggu)
    
 def printdelay(delay):
     now = datetime.now().isoformat(" ").split(".")[0]
