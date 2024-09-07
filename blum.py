@@ -767,7 +767,7 @@ def main():
             # continue
 
             if balance_info.get('playPasses') <= 0:
-                total_blum += available_balance_before
+                total_blum += float(available_balance_before) 
                 print('No have ticket For Playing games')
 
             while balance_info['playPasses'] > 0:
