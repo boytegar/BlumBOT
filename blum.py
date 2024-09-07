@@ -2,6 +2,7 @@
 # Join tele channel for update t.me/ghalibie
 import argparse
 import random
+from urllib.parse import parse_qs, unquote
 import requests
 from requests.structures import CaseInsensitiveDict
 import time
@@ -38,22 +39,42 @@ def load_credentials():
         print("Terjadi kesalahan saat memuat query:", str(e))
         return 
 
-def load_token():
-    try:
-        with open('token.txt', 'r') as f:
-            queries = [line.strip() for line in f.readlines()]
-        # print("Token berhasil dimuat.")
-        return queries
-    except FileNotFoundError:
-        print("File token.txt tidak ditemukan.")
-        return 
-    except Exception as e:
-        print("Terjadi kesalahan saat memuat token:", str(e))
-        return 
+def parse_query(query: str):
+    parsed_query = parse_qs(query)
+    parsed_query = {k: v[0] for k, v in parsed_query.items()}
+    user_data = json.loads(unquote(parsed_query['user']))
+    parsed_query['user'] = user_data
+    return parsed_query
 
-def settoken(token):
-    with open("query_id.txt", "w") as file:
-        file.write(token + "\n")
+def get(id):
+        tokens = json.loads(open("tokens.json").read())
+        if str(id) not in tokens.keys():
+            return None
+        return tokens[str(id)]
+
+def save(id, token):
+        tokens = json.loads(open("tokens.json").read())
+        tokens[str(id)] = token
+        open("tokens.json", "w").write(json.dumps(tokens, indent=4))
+
+def update(id, new_token):
+    tokens = json.loads(open("tokens.json").read())
+    if str(id) in tokens.keys():
+        tokens[str(id)] = new_token
+        open("tokens.json", "w").write(json.dumps(tokens, indent=4))
+    else:
+        return None
+
+def delete(id):
+    tokens = json.loads(open("tokens.json").read())
+    if str(id) in tokens.keys():
+        del tokens[str(id)]
+        open("tokens.json", "w").write(json.dumps(tokens, indent=4))
+    else:
+        return None
+    
+def delete_all():
+    open("tokens.json", "w").write(json.dumps({}, indent=4))
 
 def getuseragent(index):
     try:
@@ -77,15 +98,11 @@ def parse_arguments():
     args = parser.parse_args()
 
     if args.task is None:
-        # Jika parameter --task tidak diberikan, minta input dari pengguna
         task_input = input("Apakah Anda ingin cek dan claim task? (y/n, default n): ").strip().lower()
-        # Jika pengguna hanya menekan enter, gunakan 'n' sebagai default
         args.task = task_input if task_input in ['y', 'n'] else 'n'
 
     if args.reff is None:
-        # Jika parameter --claim_ref tidak diberikan, minta input dari pengguna
         reff_input = input("Apakah ingin claim ref? (y/n, default n): ").strip().lower()
-        # Jika pengguna hanya menekan enter, gunakan 'n' sebagai default
         args.reff = reff_input if reff_input in ['y', 'n'] else 'n'
 
     return args
@@ -102,25 +119,39 @@ def check_tasks(token):
         'origin': 'https://telegram.blum.codes',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
-    try:
-        response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
-        if response.status_code == 200:
-            tasks = response.json()
-            for task in tasks:
-                titlenya = task['title']
-                if task['status'] == 'CLAIMED':
-                    print(f"Task {titlenya} claimed  | Status: {task['status']} | Reward: {task['reward']}")
-                elif task['status'] == 'NOT_STARTED':
-                    print(f"Starting Task: {task['title']}")
-                    start_task(token, task['id'],titlenya)
-                    time.sleep(5)
-                    claim_task(token, task['id'],titlenya)
-                else:
-                    print(f"Task already started: {task['title']} | Status: {task['status']} | Reward: {task['reward']}")
-        else:
-            print(f"Failed to get tasks")
-    except:
-        print(f"Failed to get tasks {response.status_code} ")
+    
+    response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
+    if response.status_code == 200:
+        mains = response.json()
+        for main in mains:
+            main_tasks = main.get('tasks',[])
+            subSections = main.get('subSections',[])
+            
+            for subs in subSections:
+                title_task = subs.get('title')
+                print(f"Main Task Title : {title_task}")
+                tasks = subs.get('tasks')
+                for task in tasks:
+                    sub_title = task.get('title',"")
+                    if 'invite' in sub_title.lower():
+                        print(f"{sub_title} Skipping Quest")
+                    elif 'farm' in sub_title.lower():
+                        print(f"{sub_title} Skipping Quest")
+                    else:
+                        if task['status'] == 'CLAIMED':
+                            print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
+                        elif task['status'] == 'NOT_STARTED':
+                            print(f"Starting Task: {task['title']}")
+                            start_task(token, task['id'],sub_title)
+                            time.sleep(5)
+                            claim_task(token, task['id'],sub_title)
+                        elif task['status'] == 'READY_FOR_CLAIM':
+                            claim_task(token, task['id'],sub_title)
+                        else:
+                            print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+    else:
+        print(f"Failed to get tasks")
+    
 
 def start_task(token, task_id,titlenya):
     time.sleep(2)
@@ -135,7 +166,8 @@ def start_task(token, task_id,titlenya):
     }
     try:
         response = requests.post(url, headers=headers)
-        if response.status_code == 200:
+        print(response.text)
+        if response.status_code <= 210:
             print(f"Task {titlenya} started")
         else:
             print(f"Failed to start task {titlenya}")
@@ -157,7 +189,8 @@ def claim_task(token, task_id,titlenya):
     }
     try:
         response = requests.post(url, headers=headers)
-        if response.status_code == 200:
+        print(response.text)
+        if response.status_code <= 210:
             print(f"Task {titlenya} claimed")
         else:
             print(f"Failed to claim task {titlenya}")
@@ -181,23 +214,22 @@ def get_new_token(query_id):
     data = json.dumps({"query": query_id})
 
     # URL endpoint
-    url = "https://gateway.blum.codes/v1/auth/provider/PROVIDER_TELEGRAM_MINI_APP"
+    url = "https://user-domain.blum.codes/api/v1/auth/provider/PROVIDER_TELEGRAM_MINI_APP"
 
     # Mencoba mendapatkan token hingga 3 kali
     for attempt in range(3):
         time.sleep(2)
-        print(f"Mendapatkan token...")
+        print(f"Getting Token...")
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
-            print(f"Token berhasil dibuat")
+            print(f"Token Created")
             response_json = response.json()
             return response_json['token']['refresh']
         else:
-            print(response.json())
-            print(f"Gagal mendapatkan token, percobaan {attempt + 1}", flush=True)
+            print(f"Failed get token, trying {attempt + 1}")
     # Jika semua percobaan gagal
 
-    print(f"Gagal mendapatkan token setelah 3 percobaan.", flush=True)
+    print(f"Failed get token after 3 trying.")
     return None
 
 # Fungsi untuk mendapatkan informasi pengguna
@@ -217,11 +249,10 @@ def get_user_info(token):
         hasil = response.json()
         if hasil['message'] == 'Token is invalid':
             print(f"Token salah, mendapatkan token baru...")
-            # Mendapatkan token baru
             new_token = get_new_token()
             if new_token:
                 print(f"Token baru diperoleh, mencoba lagi...")
-                return get_user_info(new_token)  # Rekursif memanggil fungsi dengan token baru
+                return get_user_info(new_token) 
             else:
                 print(f"Gagal mendapatkan token baru.")
                 return None
@@ -229,7 +260,6 @@ def get_user_info(token):
             print(f"Gagal mendapatkan informasi user")
             return None
 
-# Fungsi untuk mendapatkan saldo
 def get_balance(token):
     headers = {
         'Authorization': f'Bearer {token}',
@@ -242,22 +272,20 @@ def get_balance(token):
         time.sleep(2)
         try:
             response = requests.get('https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
-            # print(response.json())
             if response.status_code == 200:
                 # print(f"Berhasil mendapatkan saldo")
                 return response.json()
             else:
-                print(f"Gagal mendapatkan saldo, percobaan {attempt + 1}", flush=True)
+                print(f"Gagal mendapatkan saldo, percobaan {attempt + 1}")
         except requests.exceptions.ConnectionError as e:
-            print(f"Koneksi gagal, mencoba lagi {attempt + 1}", flush=True)
+            print(f"Koneksi gagal, mencoba lagi {attempt + 1}")
         except Exception as e:
-            print(f"Error: {str(e)}", flush=True)
+            print(f"Error: {str(e)}")
         except:
-            print(f"Gagal mendapatkan saldo, mencoba lagi {attempt + 1}", flush=True)
-    print(f"Gagal mendapatkan saldo setelah 3 percobaan.", flush=True)
+            print(f"Gagal mendapatkan saldo, mencoba lagi {attempt + 1}")
+    print(f"Gagal mendapatkan saldo setelah 3 percobaan.")
     return None
 
-# Fungsi untuk memainkan game
 def play_game(token):
     time.sleep(2)
     headers = {
@@ -305,15 +333,25 @@ def claim_game(token, game_id, points):
 def get_game_id(token):
     game_response = play_game(token)
     trying = 5
-    while game_response is None or game_response.get('gameId') is None:
-        if trying == 0:
-            break
-        print("Play Game : Game ID is None, retrying...")
-        time.sleep(3)
-        game_response = play_game(token)
-        trying -= 1
+    if game_response is None or game_response.get('gameId') is None:
+        while True:
+            if trying == 0:
+                break
+            print("Play Game : Game ID is None, retrying...")
+            time.sleep(3)
+            game_response = play_game(token)
+            if game_response is not None:
+                game_id = game_response.get('gameId', None)
+            else:
+                game_id = None
+            if game_id is not None:
+                return game_response['gameId']
+                break
+            else:
+                print('Game id Not Found, trying to get')
+            trying -= 1
+    else:
         return game_response['gameId']
-    return game_response['gameId']
 
 def claim_balance(token):
     time.sleep(2)
@@ -403,7 +441,7 @@ def check_balance_friend(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.get('https://gateway.blum.codes/v1/friends/balance', headers=headers)
+        response = requests.get('https://user-domain.blum.codes/api/v1/friends/balance', headers=headers)
         return response.json()
     except requests.exceptions.ConnectionError as e:
         print(f"Gagal mendapatkan saldo teman karena masalah koneksi: {e}")
@@ -422,7 +460,7 @@ def claim_balance_friend(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post('https://gateway.blum.codes/v1/friends/claim', headers=headers)
+        response = requests.post('https://user-domain.blum.codes/api/v1/friends/claim', headers=headers)
         return response.json()
     except requests.exceptions.ConnectionError as e:
         print(f"Gagal mengklaim saldo teman karena masalah koneksi: {e}")
@@ -534,9 +572,27 @@ def join_tribe(token):
     return None
 checked_tasks = {}
 
+def print_(word):
+    now = datetime.now().isoformat(" ").split(".")[0]
+    print(f"[{now}] {word}")
+
 args = parse_arguments()
 cek_task_enable = args.task
 claim_ref_enable = args.reff
+
+def generate_token():
+    queries = load_credentials()
+    for index, query in enumerate(queries, start=1):
+        parse = parse_query(query)
+        user = parse.get('user')
+        print_(f"Account {index}  | {parse.get('user')['username']}")
+        token = get(user['id'])
+        if token == None:
+            print_("Generate token...")
+            time.sleep(2)
+            token = get_new_token(query)
+            save(user.get('id'), token)
+            print_("Generate Token Done!")
 
 def main():
     
@@ -548,30 +604,35 @@ def main():
               
           """)
     while True:
-        tokens = []
         queries = load_credentials()
-        delay_time = random.randint(28800, 29300)
+        delay_time = random.randint(28800, 29000)
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
-        for index, query_id in enumerate(queries):
-            headers = getuseragent(index)
-            token = get_new_token(query_id)
-            tokens.append(token)
-            user_info = get_user_info(token)
-            if user_info is None:
-                continue
-            print(f"==================  {user_info['username']}  ==================")  
+        for index, query in enumerate(queries, start=1):
+            useragents = getuseragent(index)
+            parse = parse_query(query)
+            user = parse.get('user')
+            time.sleep(2)
+            print_(f"===== Account {index}  | {parse.get('user')['username']} =====")
+            token = get(user['id'])
+            if token == None:
+                print_("Generate token...")
+                time.sleep(2)
+                token = get_new_token(query)
+                save(user.get('id'), token)
+                print_("Generate Token Done!")
+            
             print(f"Getting Info....")
             balance_info = get_balance(token)
             if balance_info is None:
-                print(f"Failed to Get information", flush=True)
+                print(f"Failed to Get information")
                 continue
             else:
                 available_balance_before = balance_info['availableBalance']  
 
                 balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
 
-                print(f"[{now}] Balance       : {balance_before}", flush=True)
+                print(f"[{now}] Balance       : {balance_before}")
                 print(f"[{now}] Tiket Game    : {balance_info['playPasses']}")
                 data_tribe = check_tribe(token)
                 time.sleep(2)
@@ -603,72 +664,70 @@ def main():
                         print(f"[{now}] Claim Balance: Claiming balance...")
                         claim_response = claim_balance(token)
                         if claim_response:
-                            print(f"[{now}] Claim Balance : Claimed: {claim_response['availableBalance']}                ", flush=True)
+                            print(f"[{now}] Claim Balance : Claimed: {claim_response['availableBalance']}                ")
                             print(f"[{now}] Claim Balance : Starting farming...")
                             start_response = start_farming(token)
                             if start_response:
-                                print(f"[{now}] Claim Balance : Farming started.", flush=True)
+                                print(f"[{now}] Claim Balance : Farming started.")
                             else:
-                                print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
                         else:
-                            print(f"[{now}] Claim Balance : Failed claim", claim_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed claim", claim_response)
                             start_response = start_farming(token)
                             if start_response:
-                                print(f"[{now}] Claim Balance : Farming started.", flush=True)
+                                print(f"[{now}] Claim Balance : Farming started.")
                             else:
-                                print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
                 else:
-                    print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming", flush=True)
+                    print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming")
                     print(f"[{now}] Claim Balance : Claiming balance...")
                     claim_response = claim_balance(token)
                     if claim_response:
-                        print(f"[{now}] Claim Balance : Claimed               ", flush=True)
+                        print(f"[{now}] Claim Balance : Claimed               ")
                         print(f"[{now}] Claim Balance : Starting farming...")
                         start_response = start_farming(token)
                         if start_response:
-                            print(f"[{now}] Claim Balance : Farming started.", flush=True)
+                            print(f"[{now}] Claim Balance : Farming started.")
                         else:
-                            print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
                     else:
-                        print(f"[{now}] Claim Balance : Gagal claim", claim_response, flush=True)
+                        print(f"[{now}] Claim Balance : Gagal claim", claim_response)
                         start_response = start_farming(token)
                         if start_response:
-                            print(f"[{now}] Claim Balance : Farming started.", flush=True)
+                            print(f"[{now}] Claim Balance : Farming started.")
                         else:
-                            print(f"[{now}] Claim Balance : Failed start farming", start_response, flush=True)
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
 
             print(f"[{now}] Daily Reward : Checking daily reward...")
             daily_reward_response = check_daily_reward(token)
             if daily_reward_response is None:
-                print(f"[{now}] Daily Reward : Failed Check Daily Reward.", flush=True)
+                print(f"[{now}] Daily Reward : Failed Check Daily Reward.")
             else:
                 if daily_reward_response.get('message') == 'same day':
-                    print(f"[{now}] Daily Reward : Daily Reward Claimed", flush=True)
+                    print(f"[{now}] Daily Reward : Daily Reward Claimed")
                 elif daily_reward_response.get('message') == 'OK':
-                    print(f"[{now}] Daily Reward : Daily Reward Done Claim!", flush=True)
+                    print(f"[{now}] Daily Reward : Daily Reward Done Claim!")
                 else:
-                    print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}", flush=True)
-
-            if cek_task_enable == 'y':
-                if query_id not in checked_tasks or not checked_tasks[query_id]:
-                    print(f"[{now}] Checking tasks...")
-                    check_tasks(token)
-                    checked_tasks[query_id] = True
-
-            
+                    print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
+ 
             print(f"[{now}] Reff Balance : Checking reff balance...")
             if claim_ref_enable == 'y':
                 friend_balance = check_balance_friend(token)
                 if friend_balance:
                     if friend_balance['canClaim']:
-                        print(f"[{now}] Reff Balance: {friend_balance['amountForClaim']}", flush=True)
-                        print(f"[{now}] Claiming Ref balance.....", flush=True)
-                        claim_friend_balance = claim_balance_friend(token)
-                        if claim_friend_balance:
-                            claimed_amount = claim_friend_balance['claimBalance']
-                            print(f"[{now}] Reff Balance : Sukses claim total: {claimed_amount}", flush=True)
+                        print(f"[{now}] Reff Balance: {friend_balance['amountForClaim']}")
+                        print(f"[{now}] Claiming Ref balance.....")
+                        friend_balance = friend_balance.get('amountForClaim',"0")
+                        if friend_balance != "0":
+                            claim_friend_balance = claim_balance_friend(token)
+                            print(claim_friend_balance)
+                            if claim_friend_balance:
+                                claimed_amount = claim_friend_balance['claimBalance']
+                                print(f"[{now}] Reff Balance : Claim Done : {claimed_amount}")
+                            else:
+                                print(f"[{now}] Reff Balance : Failed Claim")
                         else:
-                            print(f"[{now}] Reff Balance : Gagal mengklaim saldo ref", flush=True)
+                            print_('Not enough reff balance')
                     else:
                         can_claim_at = friend_balance.get('canClaimAt')
                         if can_claim_at:
@@ -677,72 +736,99 @@ def main():
                             time_diff = claim_time - current_time
                             hours, remainder = divmod(int(time_diff.total_seconds()), 3600)
                             minutes, seconds = divmod(remainder, 60)
-                            print(f"[{now}] Reff Balance : Klaim pada {hours} jam {minutes} menit lagi", flush=True)
+                            print(f"[{now}] Reff Balance : Claimed inf {hours} hours {minutes} minutes")
                         else:
-                            print(f"[{now}] Reff Balance : False                                 ", flush=True)
+                            print(f"[{now}] Reff Balance : False                                 ")
                 else:
-                    print(f"[{now}] Reff Balance : Gagal cek reff balance", flush=True)
+                    print(f"[{now}] Reff Balance : False cek reff balance")
             else:
-                print(f"[{now}] Reff Balance : Skipped !                    ", flush=True)
+                print(f"[{now}] Reff Balance : Skipped !                    ")
             
-        
-        for index, token in enumerate(tokens):
+        total_blum = 0
+        for index, query in enumerate(queries, start=1):
             time.sleep(3)
+            parse = parse_query(query)
+            user = parse.get('user')
+            token = get(user['id'])
+            print_(f"Account {index}  | {parse.get('user')['username']}")
+            if token == None:
+                print_("Generate token...")
+                time.sleep(2)
+                token = get_new_token(query)
+                save(user.get('id'), token)
+                print_("Generate Token Done!")
+
             balance_info = get_balance(token)
             available_balance_before = balance_info['availableBalance'] 
             balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
-            print(f"======== Account {index+1} ========")
+            if cek_task_enable == 'y':  
+                print(f"[{now}] Checking tasks...")
+                check_tasks(token)
+            # continue
+
             if balance_info.get('playPasses') <= 0:
+                total_blum += available_balance_after
                 print('No have ticket For Playing games')
+
             while balance_info['playPasses'] > 0:
                 now = datetime.now().isoformat(" ").split(".")[0]
                 print(f"[{now}] Play Game : Playing game...")
                 gameId = get_game_id(token)
                 print(f"[{now}] Play Game : Checking game...")
-                taps = random.randint(230, 250)
+                taps = random.randint(260, 280)
                 delays = random.randint(30, 40)
                 time.sleep(delays)
                 claim_response = claim_game(token, gameId, taps)
                 if claim_response is None:
-                    print(f"[{now}] Play Game : Game still running waiting...", flush=True)
+                    print(f"[{now}] Play Game : Game still running waiting...")
                 while True:
                     if claim_response.text == '{"message":"game session not finished"}':
                         time.sleep(10)  
-                        print(f"[{now}] Play Game : Game still running waiting....", flush=True)
+                        print(f"[{now}] Play Game : Game still running waiting....")
                         claim_response = claim_game(token, gameId, taps)
                         if claim_response is None:
-                            print(f"[{now}] Play Game : Failed Claim game point, trying...", flush=True)
+                            print(f"[{now}] Play Game : Failed Claim game point, trying...")
                     elif claim_response.text == '{"message":"game session not found"}':
-                        print(f"[{now}] Play Game : Game is Done", flush=True)
+                        print(f"[{now}] Play Game : Game is Done")
+                        mid_time = time.time()
+                        waktu_tunggu = delay_time - (mid_time-start_time)
+                        if waktu_tunggu <= 0:
+                            break
                         break
                     elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
                         print(f"[{now}] Play Game : Token Not Valid, Take new token...")
-                        token = get_new_token(query_id)
                         continue  
                     else:
-                        print(f"Play Game : Game is Done: {claim_response.text}", flush=True)
+                        print(f"Play Game : Game is Done: {claim_response.text}")
                         break
                
                 balance_info = get_balance(token) 
                 if balance_info is None: 
-                    print(f"[{now}] Play Game Gagal mendapatkan informasi tiket", flush=True)
+                    print(f"[{now}] Play Game Gagal mendapatkan informasi tiket")
                 else:
                     available_balance_after = balance_info['availableBalance'] 
+                    
                     before = float(available_balance_before) 
                     after =  float(available_balance_after)
-                   
+                    
                     total_balance = after - before  
-                    print(f"[{now}] Play Game: You Got Total {total_balance} From Playing Game", flush=True)
+                    print(f"[{now}] Play Game: You Got Total {total_balance} From Playing Game")
                     if balance_info['playPasses'] > 0:
-                        print(f"[{now}] Play Game : Tiket still ready, Playing game again...", flush=True)
+                        print(f"[{now}] Play Game : Tiket still ready, Playing game again...")
                         continue  
                     else:
-                        print(f"[{now}] Play Game : Tiket Finished.", flush=True)
+                        total_blum += available_balance_before
+                        total_blum += total_balance
+                        print(f"[{now}] Play Game : Tiket Finished.")
                         break
-            end_time = time.time()
 
+        end_time = time.time()
+        delete_all()
         print(f"========= ALL ID DONE =========")
+        total_acc = len(queries)
+        
         waktu_tunggu = delay_time - (end_time-start_time)
+        print_(f"Total Account = {total_acc} | Total Points Blum = {total_blum}")
         printdelay(waktu_tunggu)
         if waktu_tunggu >= 0:
             time.sleep(waktu_tunggu)
