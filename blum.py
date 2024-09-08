@@ -817,7 +817,7 @@ def main():
                         print(f"[{now}] Play Game : Tiket still ready, Playing game again...")
                         continue  
                     else:
-                        total_blum += available_balance_before
+                        total_blum += before
                         total_blum += total_balance
                         print(f"[{now}] Play Game : Tiket Finished.")
                         break
@@ -828,7 +828,7 @@ def main():
         total_acc = len(queries)
         
         waktu_tunggu = delay_time - (end_time-start_time)
-        print_(f"Total Account = {total_acc} | Total Points Blum = {total_blum}")
+        print_(f"Total Account = {total_acc} | Total Points Blum = {round(total_blum)}")
         printdelay(waktu_tunggu)
         if waktu_tunggu >= 0:
             time.sleep(waktu_tunggu)
