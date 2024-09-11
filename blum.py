@@ -143,9 +143,17 @@ def check_tasks(token):
                         elif task['status'] == 'NOT_STARTED':
                             print(f"Starting Task: {task['title']}")
                             start_task(token, task['id'],sub_title)
+                            validationType = task.get('validationType')
+                            if validationType == 'KEYWORD':
+                                time.sleep(2)
+                                validate_task(token, task['id'],sub_title)
                             time.sleep(5)
                             claim_task(token, task['id'],sub_title)
                         elif task['status'] == 'READY_FOR_CLAIM':
+                            claim_task(token, task['id'],sub_title)
+                        elif task['status'] == 'READY_FOR_VALIDATE':
+                            validate_task(token, task['id'],sub_title)
+                            time.sleep(5)
                             claim_task(token, task['id'],sub_title)
                         else:
                             print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
@@ -173,6 +181,28 @@ def start_task(token, task_id,titlenya):
         return 
     except:
         print(f"Failed to start task {titlenya} {response.status_code} ")
+
+def validate_task(token, task_id, title):
+    time.sleep(2)
+    url = f'https://game-domain.blum.codes/api/v1/tasks/{task_id}/validate'
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.9',
+        'content-length': '0',
+        'origin': 'https://telegram.blum.codes',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+    }
+    payload = {'keyword': "GO GET"}
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code <= 210:
+            print(f"Task {title} validating")
+        else:
+            print(f"Failed to validate task {title}")
+        return 
+    except:
+        print(f"Failed to validate task {title} {response.status_code} ")
 
 def claim_task(token, task_id,titlenya):
     time.sleep(2)
@@ -606,142 +636,142 @@ def main():
         delay_time = random.randint(28800, 29000)
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
-        # for index, query in enumerate(queries, start=1):
-        #     useragents = getuseragent(index)
-        #     parse = parse_query(query)
-        #     user = parse.get('user')
-        #     time.sleep(2)
-        #     print_(f"===== Account {index}  | {parse.get('user')['username']} =====")
-        #     token = get(user['id'])
-        #     if token == None:
-        #         print_("Generate token...")
-        #         time.sleep(2)
-        #         token = get_new_token(query)
-        #         save(user.get('id'), token)
-        #         print_("Generate Token Done!")
+        for index, query in enumerate(queries, start=1):
+            useragents = getuseragent(index)
+            parse = parse_query(query)
+            user = parse.get('user')
+            time.sleep(2)
+            print_(f"===== Account {index}  | {parse.get('user')['username']} =====")
+            token = get(user['id'])
+            if token == None:
+                print_("Generate token...")
+                time.sleep(2)
+                token = get_new_token(query)
+                save(user.get('id'), token)
+                print_("Generate Token Done!")
             
-        #     print(f"Getting Info....")
-        #     balance_info = get_balance(token)
-        #     if balance_info is None:
-        #         print(f"Failed to Get information")
-        #         continue
-        #     else:
-        #         available_balance_before = balance_info['availableBalance']  
+            print(f"Getting Info....")
+            balance_info = get_balance(token)
+            if balance_info is None:
+                print(f"Failed to Get information")
+                continue
+            else:
+                available_balance_before = balance_info['availableBalance']  
 
-        #         balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
+                balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
 
-        #         print(f"[{now}] Balance       : {balance_before}")
-        #         print(f"[{now}] Tiket Game    : {balance_info['playPasses']}")
-        #         data_tribe = check_tribe(token)
-        #         time.sleep(2)
-        #         if data_tribe is not None:
-        #             print(f"[{now}] Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
-        #         else:
-        #             print(f'[{now}] Tribe not Found')
-        #             time.sleep(1)
-        #             print(f'[{now}] Joininng Tribe...')
-        #             join = join_tribe(token)
-        #             if join is not None:
-        #                 print(f'[{now}] Join Tribe Done')
+                print(f"[{now}] Balance       : {balance_before}")
+                print(f"[{now}] Tiket Game    : {balance_info['playPasses']}")
+                data_tribe = check_tribe(token)
+                time.sleep(2)
+                if data_tribe is not None:
+                    print(f"[{now}] Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
+                else:
+                    print(f'[{now}] Tribe not Found')
+                    time.sleep(1)
+                    print(f'[{now}] Joininng Tribe...')
+                    join = join_tribe(token)
+                    if join is not None:
+                        print(f'[{now}] Join Tribe Done')
 
-        #         farming_info = balance_info.get('farming')
+                farming_info = balance_info.get('farming')
         
-        #         if farming_info:
-        #             end_time_ms = farming_info['endTime']
-        #             end_time_s = end_time_ms / 1000.0
-        #             end_utc_date_time = datetime.fromtimestamp(end_time_s, timezone.utc)
-        #             current_utc_time = datetime.now(timezone.utc)
-        #             time_difference = end_utc_date_time - current_utc_time
-        #             hours_remaining = int(time_difference.total_seconds() // 3600)
-        #             minutes_remaining = int((time_difference.total_seconds() % 3600) // 60)
-        #             farming_balance = farming_info['balance']
-        #             farming_balance_formated = f"{float(farming_balance):,.0f}".replace(",", ".")
-        #             print(f"[{now}] Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
+                if farming_info:
+                    end_time_ms = farming_info['endTime']
+                    end_time_s = end_time_ms / 1000.0
+                    end_utc_date_time = datetime.fromtimestamp(end_time_s, timezone.utc)
+                    current_utc_time = datetime.now(timezone.utc)
+                    time_difference = end_utc_date_time - current_utc_time
+                    hours_remaining = int(time_difference.total_seconds() // 3600)
+                    minutes_remaining = int((time_difference.total_seconds() % 3600) // 60)
+                    farming_balance = farming_info['balance']
+                    farming_balance_formated = f"{float(farming_balance):,.0f}".replace(",", ".")
+                    print(f"[{now}] Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
 
-        #             if hours_remaining < 0:
-        #                 print(f"[{now}] Claim Balance: Claiming balance...")
-        #                 claim_response = claim_balance(token)
-        #                 if claim_response:
-        #                     print(f"[{now}] Claim Balance : Claimed: {claim_response['availableBalance']}                ")
-        #                     print(f"[{now}] Claim Balance : Starting farming...")
-        #                     start_response = start_farming(token)
-        #                     if start_response:
-        #                         print(f"[{now}] Claim Balance : Farming started.")
-        #                     else:
-        #                         print(f"[{now}] Claim Balance : Failed start farming", start_response)
-        #                 else:
-        #                     print(f"[{now}] Claim Balance : Failed claim", claim_response)
-        #                     start_response = start_farming(token)
-        #                     if start_response:
-        #                         print(f"[{now}] Claim Balance : Farming started.")
-        #                     else:
-        #                         print(f"[{now}] Claim Balance : Failed start farming", start_response)
-        #         else:
-        #             print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming")
-        #             print(f"[{now}] Claim Balance : Claiming balance...")
-        #             claim_response = claim_balance(token)
-        #             if claim_response:
-        #                 print(f"[{now}] Claim Balance : Claimed               ")
-        #                 print(f"[{now}] Claim Balance : Starting farming...")
-        #                 start_response = start_farming(token)
-        #                 if start_response:
-        #                     print(f"[{now}] Claim Balance : Farming started.")
-        #                 else:
-        #                     print(f"[{now}] Claim Balance : Failed start farming", start_response)
-        #             else:
-        #                 print(f"[{now}] Claim Balance : Gagal claim", claim_response)
-        #                 start_response = start_farming(token)
-        #                 if start_response:
-        #                     print(f"[{now}] Claim Balance : Farming started.")
-        #                 else:
-        #                     print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                    if hours_remaining < 0:
+                        print(f"[{now}] Claim Balance: Claiming balance...")
+                        claim_response = claim_balance(token)
+                        if claim_response:
+                            print(f"[{now}] Claim Balance : Claimed: {claim_response['availableBalance']}                ")
+                            print(f"[{now}] Claim Balance : Starting farming...")
+                            start_response = start_farming(token)
+                            if start_response:
+                                print(f"[{now}] Claim Balance : Farming started.")
+                            else:
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                        else:
+                            print(f"[{now}] Claim Balance : Failed claim", claim_response)
+                            start_response = start_farming(token)
+                            if start_response:
+                                print(f"[{now}] Claim Balance : Farming started.")
+                            else:
+                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                else:
+                    print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming")
+                    print(f"[{now}] Claim Balance : Claiming balance...")
+                    claim_response = claim_balance(token)
+                    if claim_response:
+                        print(f"[{now}] Claim Balance : Claimed               ")
+                        print(f"[{now}] Claim Balance : Starting farming...")
+                        start_response = start_farming(token)
+                        if start_response:
+                            print(f"[{now}] Claim Balance : Farming started.")
+                        else:
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                    else:
+                        print(f"[{now}] Claim Balance : Gagal claim", claim_response)
+                        start_response = start_farming(token)
+                        if start_response:
+                            print(f"[{now}] Claim Balance : Farming started.")
+                        else:
+                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
 
-        #     print(f"[{now}] Daily Reward : Checking daily reward...")
-        #     daily_reward_response = check_daily_reward(token)
-        #     if daily_reward_response is None:
-        #         print(f"[{now}] Daily Reward : Failed Check Daily Reward.")
-        #     else:
-        #         if daily_reward_response.get('message') == 'same day':
-        #             print(f"[{now}] Daily Reward : Daily Reward Claimed")
-        #         elif daily_reward_response.get('message') == 'OK':
-        #             print(f"[{now}] Daily Reward : Daily Reward Done Claim!")
-        #         else:
-        #             print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
+            print(f"[{now}] Daily Reward : Checking daily reward...")
+            daily_reward_response = check_daily_reward(token)
+            if daily_reward_response is None:
+                print(f"[{now}] Daily Reward : Failed Check Daily Reward.")
+            else:
+                if daily_reward_response.get('message') == 'same day':
+                    print(f"[{now}] Daily Reward : Daily Reward Claimed")
+                elif daily_reward_response.get('message') == 'OK':
+                    print(f"[{now}] Daily Reward : Daily Reward Done Claim!")
+                else:
+                    print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
  
-        #     print(f"[{now}] Reff Balance : Checking reff balance...")
-        #     if claim_ref_enable == 'y':
-        #         friend_balance = check_balance_friend(token)
-        #         if friend_balance:
-        #             if friend_balance['canClaim']:
-        #                 print(f"[{now}] Reff Balance: {friend_balance['amountForClaim']}")
-        #                 print(f"[{now}] Claiming Ref balance.....")
-        #                 friend_balance = friend_balance.get('amountForClaim',"0")
-        #                 if friend_balance != "0":
-        #                     claim_friend_balance = claim_balance_friend(token)
-        #                     print(claim_friend_balance)
-        #                     if claim_friend_balance:
-        #                         claimed_amount = claim_friend_balance['claimBalance']
-        #                         print(f"[{now}] Reff Balance : Claim Done : {claimed_amount}")
-        #                     else:
-        #                         print(f"[{now}] Reff Balance : Failed Claim")
-        #                 else:
-        #                     print_('Not enough reff balance')
-        #             else:
-        #                 can_claim_at = friend_balance.get('canClaimAt')
-        #                 if can_claim_at:
-        #                     claim_time = datetime.fromtimestamp(int(can_claim_at) / 1000)
-        #                     current_time = datetime.now()
-        #                     time_diff = claim_time - current_time
-        #                     hours, remainder = divmod(int(time_diff.total_seconds()), 3600)
-        #                     minutes, seconds = divmod(remainder, 60)
-        #                     print(f"[{now}] Reff Balance : Claimed inf {hours} hours {minutes} minutes")
-        #                 else:
-        #                     print(f"[{now}] Reff Balance : False                                 ")
-        #         else:
-        #             print(f"[{now}] Reff Balance : False cek reff balance")
-        #     else:
-        #         print(f"[{now}] Reff Balance : Skipped !                    ")
-            
+            print(f"[{now}] Reff Balance : Checking reff balance...")
+            if claim_ref_enable == 'y':
+                friend_balance = check_balance_friend(token)
+                if friend_balance:
+                    if friend_balance['canClaim']:
+                        print(f"[{now}] Reff Balance: {friend_balance['amountForClaim']}")
+                        print(f"[{now}] Claiming Ref balance.....")
+                        friend_balance = friend_balance.get('amountForClaim',"0")
+                        if friend_balance != "0":
+                            claim_friend_balance = claim_balance_friend(token)
+                            print(claim_friend_balance)
+                            if claim_friend_balance:
+                                claimed_amount = claim_friend_balance['claimBalance']
+                                print(f"[{now}] Reff Balance : Claim Done : {claimed_amount}")
+                            else:
+                                print(f"[{now}] Reff Balance : Failed Claim")
+                        else:
+                            print_('Not enough reff balance')
+                    else:
+                        can_claim_at = friend_balance.get('canClaimAt')
+                        if can_claim_at:
+                            claim_time = datetime.fromtimestamp(int(can_claim_at) / 1000)
+                            current_time = datetime.now()
+                            time_diff = claim_time - current_time
+                            hours, remainder = divmod(int(time_diff.total_seconds()), 3600)
+                            minutes, seconds = divmod(remainder, 60)
+                            print(f"[{now}] Reff Balance : Claimed inf {hours} hours {minutes} minutes")
+                        else:
+                            print(f"[{now}] Reff Balance : False                                 ")
+                else:
+                    print(f"[{now}] Reff Balance : False cek reff balance")
+            else:
+                print(f"[{now}] Reff Balance : Skipped !                    ")
+        # break    
         total_blum = 0
         for index, query in enumerate(queries, start=1):
             time.sleep(3)
@@ -762,7 +792,7 @@ def main():
             if cek_task_enable == 'y':  
                 print(f"[{now}] Checking tasks...")
                 check_tasks(token)
-            continue
+            # continue
 
             if balance_info.get('playPasses') <= 0:
                 total_blum += float(available_balance_before) 
