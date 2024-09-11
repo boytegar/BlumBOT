@@ -89,26 +89,6 @@ def getuseragent(index):
     except Exception as e:
         return 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36'
 
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Blum BOT')
-    parser.add_argument('--task', type=str, choices=['y', 'n'], help='Cek and Claim Task (y/n)')
-    parser.add_argument('--reff', type=str, choices=['y', 'n'], help='Apakah ingin claim ref? (y/n, default n)')
-    args = parser.parse_args()
-
-    if args.task is None:
-        task_input = input("Apakah Anda ingin cek dan claim task? (y/n, default n): ").strip().lower()
-        args.task = task_input if task_input in ['y', 'n'] else 'n'
-
-    if args.reff is None:
-        reff_input = input("Apakah ingin claim ref? (y/n, default n): ").strip().lower()
-        args.reff = reff_input if reff_input in ['y', 'n'] else 'n'
-
-    return args
-
-
-
 def check_tasks(token):
     time.sleep(2)
     headers = {
@@ -182,7 +162,7 @@ def start_task(token, task_id,titlenya):
     except:
         print(f"Failed to start task {titlenya} {response.status_code} ")
 
-def validate_task(token, task_id, title):
+def validate_task(token, task_id, title, word=None):
     time.sleep(2)
     url = f'https://game-domain.blum.codes/api/v1/tasks/{task_id}/validate'
     headers = {
@@ -193,7 +173,7 @@ def validate_task(token, task_id, title):
         'origin': 'https://telegram.blum.codes',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
-    payload = {'keyword': "GO GET"}
+    payload = {'keyword': word}
     try:
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code <= 210:
@@ -604,10 +584,6 @@ def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
     print(f"[{now}] {word}")
 
-args = parse_arguments()
-cek_task_enable = args.task
-claim_ref_enable = args.reff
-
 def generate_token():
     queries = load_credentials()
     for index, query in enumerate(queries, start=1):
@@ -632,6 +608,8 @@ def main():
               
           """)
     while True:
+        claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()
+        check_task_enable = input("want claim task? y/n  : ").strip().lower()
         queries = load_credentials()
         delay_time = random.randint(28800, 29000)
         start_time = time.time()
@@ -789,7 +767,7 @@ def main():
             balance_info = get_balance(token)
             available_balance_before = balance_info['availableBalance'] 
             balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
-            if cek_task_enable == 'y':  
+            if check_task_enable == 'y':  
                 print(f"[{now}] Checking tasks...")
                 check_tasks(token)
             # continue
@@ -861,6 +839,98 @@ def main():
         if waktu_tunggu >= 0:
             time.sleep(waktu_tunggu)
    
+def task_main():
+    verif = input("want input verification y/n  : ").strip().lower()
+    if verif == 'y':
+        words = input("verification word : ").strip().upper()
+
+    queries = load_credentials()
+    now = datetime.now().isoformat(" ").split(".")[0]
+    for index, query in enumerate(queries, start=1):
+            time.sleep(3)
+            parse = parse_query(query)
+            user = parse.get('user')
+            token = get(user['id'])
+            print_(f"Account {index}  | {parse.get('user')['username']}")
+            if token == None:
+                print_("Generate token...")
+                time.sleep(2)
+                token = get_new_token(query)
+                save(user.get('id'), token)
+                print_("Generate Token Done!")
+
+            print(f"[{now}] Checking tasks...")
+
+            time.sleep(2)
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'accept': 'application/json, text/plain, */*',
+                'accept-language': 'en-US,en;q=0.9',
+                'content-length': '0',
+                'origin': 'https://telegram.blum.codes',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+            }
+    
+            response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
+            if response.status_code == 200:
+                mains = response.json()
+                for main in mains:
+                    main_tasks = main.get('tasks',[])
+                    subSections = main.get('subSections',[])
+                    
+                    for subs in subSections:
+                        title_task = subs.get('title')
+                        print(f"Main Task Title : {title_task}")
+                        tasks = subs.get('tasks')
+                        for task in tasks:
+                            sub_title = task.get('title',"")
+                            if 'invite' in sub_title.lower():
+                                print(f"{sub_title} Skipping Quest")
+                            elif 'farm' in sub_title.lower():
+                                print(f"{sub_title} Skipping Quest")
+                            else:
+                                if task['status'] == 'CLAIMED':
+                                    print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
+                                elif task['status'] == 'NOT_STARTED':
+                                    print(f"Starting Task: {task['title']}")
+                                    start_task(token, task['id'],sub_title)
+                                    validationType = task.get('validationType')
+                                    if validationType == 'KEYWORD':
+                                        time.sleep(2)
+                                        validate_task(token, task['id'],sub_title, word=words)
+                                    time.sleep(5)
+                                    claim_task(token, task['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_CLAIM':
+                                    claim_task(token, task['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_VALIDATE':
+                                    validate_task(token, task['id'],sub_title)
+                                    time.sleep(5)
+                                    claim_task(token, task['id'],sub_title)
+                                else:
+                                    print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+            else:
+                print(f"Failed to get tasks")
+            # continue
+
+def start():
+    print(r"""
+        
+                    BLUM BOT
+    find new airdrop & bot here: t.me/sansxgroup
+              
+        select this one :
+        1. claim daily
+        2. clear task
+          
+          """)
+    selector = input("Select the one  : ").strip().lower()
+
+    if selector == '1':
+        main()
+    elif selector == '2':
+        task_main()
+    else:
+        exit()
 def printdelay(delay):
     now = datetime.now().isoformat(" ").split(".")[0]
     hours, remainder = divmod(delay, 3600)
@@ -868,4 +938,4 @@ def printdelay(delay):
     print(f"{now} | Waiting Time: {hours} hours, {minutes} minutes, and {round(sec)} seconds")
 
 if __name__ == "__main__":
-    main()
+    start()
