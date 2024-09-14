@@ -143,7 +143,7 @@ def check_tasks(token):
 
 def start_task(token, task_id,titlenya):
     time.sleep(2)
-    url = f'https://game-domain.blum.codes/api/v1/tasks/{task_id}/start'
+    url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/start'
     headers = {
         'Authorization': f'Bearer {token}',
         'accept': 'application/json, text/plain, */*',
@@ -164,7 +164,7 @@ def start_task(token, task_id,titlenya):
 
 def validate_task(token, task_id, title, word=None):
     time.sleep(2)
-    url = f'https://game-domain.blum.codes/api/v1/tasks/{task_id}/validate'
+    url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/validate'
     headers = {
         'Authorization': f'Bearer {token}',
         'accept': 'application/json, text/plain, */*',
@@ -187,7 +187,7 @@ def validate_task(token, task_id, title, word=None):
 def claim_task(token, task_id,titlenya):
     time.sleep(2)
     print(f"Claiming task {titlenya}")
-    url = f'https://game-domain.blum.codes/api/v1/tasks/{task_id}/claim'
+    url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/claim'
     headers = {
         'Authorization': f'Bearer {token}',
         'accept': 'application/json, text/plain, */*',
@@ -362,7 +362,7 @@ def get_game_id(token):
         return game_response['gameId']
 
 def claim_balance(token):
-    time.sleep(2)
+    
     headers = {
         'Authorization': f'Bearer {token}',
         'accept': 'application/json, text/plain, */*',
@@ -372,15 +372,16 @@ def claim_balance(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post('https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
-        if response.status_code >= 500:
-            print(response.json())
-            return None
-        elif response.status_code >= 400:
-            print(response.json())
-            return None
-        elif response.status_code >= 200:
-            return response.json()
+        while True: 
+            time.sleep(2)
+            response = requests.post('https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
+            if response.status_code >= 500:
+                print(f"Error Code : {response.status_code}")
+            elif response.status_code >= 400:
+                print(response.json())
+                return None
+            elif response.status_code >= 200:
+                return response.json()
     except requests.exceptions.ConnectionError as e:
         print(f"Gagal mengklaim saldo karena masalah koneksi: {e}")
     except Exception as e:
@@ -398,8 +399,16 @@ def start_farming(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post('https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
-        return response.json()
+        while True: 
+            time.sleep(2)
+            response = requests.post('https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
+            if response.status_code >= 500:
+                print(f"Error Code : {response.status_code}")
+            elif response.status_code >= 400:
+                print(response.json())
+                return None
+            elif response.status_code >= 200:
+                return response.json()
     except requests.exceptions.ConnectionError as e:
         print(f"Gagal memulai farming karena masalah koneksi: {e}")
     except Exception as e:
@@ -609,7 +618,8 @@ def main():
           """)
     while True:
         claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()
-        check_task_enable = input("want claim task? y/n  : ").strip().lower()
+        # check_task_enable = input("want claim task? y/n  : ").strip().lower()
+        check_task_enable = 'n'
         queries = load_credentials()
         delay_time = random.randint(28800, 29000)
         start_time = time.time()
@@ -871,13 +881,70 @@ def task_main():
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
             }
     
-            response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
+            response = requests.get('https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
             if response.status_code == 200:
                 mains = response.json()
                 for main in mains:
                     main_tasks = main.get('tasks',[])
                     subSections = main.get('subSections',[])
-                    
+                    title = main.get('title', "")
+                    print_(f"Title : {title}")
+                    for task in main_tasks:
+                        sub_title = task.get('title',"")
+
+                        subtask = task.get('subTasks',[])
+                        for stask in subtask:
+                            sub_title = stask.get('title',"")
+                            if 'invite' in sub_title.lower():
+                                print(f"{sub_title} Skipping Quest")
+                            elif 'farm' in sub_title.lower():
+                                print(f"{sub_title} Skipping Quest")
+                            else:
+                                if stask['status'] == 'CLAIMED':
+                                    print(f"Task {title_task} claimed  | Status: {stask['status']} | Reward: {stask['reward']}")
+                                elif stask['status'] == 'NOT_STARTED':
+                                    print(f"Starting Task: {stask['title']}")
+                                    start_task(token, stask['id'],sub_title)
+                                    validationType = stask.get('validationType')
+                                    if validationType == 'KEYWORD':
+                                        time.sleep(2)
+                                        validate_task(token, stask['id'],sub_title, word=words)
+                                    time.sleep(5)
+                                    claim_task(token, stask['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_CLAIM':
+                                    claim_task(token, stask['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_VALIDATE':
+                                    validate_task(token, stask['id'],sub_title)
+                                    time.sleep(5)
+                                    claim_task(token, stask['id'],sub_title)
+                                else:
+                                    print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+
+                        if 'invite' in sub_title.lower():
+                            print(f"{sub_title} Skipping Quest")
+                        elif 'farm' in sub_title.lower():
+                            print(f"{sub_title} Skipping Quest")
+                        else:
+                            if task['status'] == 'CLAIMED':
+                                print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
+                            elif task['status'] == 'NOT_STARTED':
+                                print(f"Starting Task: {task['title']}")
+                                start_task(token, task['id'],sub_title)
+                                validationType = task.get('validationType')
+                                if validationType == 'KEYWORD':
+                                    time.sleep(2)
+                                    validate_task(token, task['id'],sub_title, word=words)
+                                time.sleep(5)
+                                claim_task(token, task['id'],sub_title)
+                            elif task['status'] == 'READY_FOR_CLAIM':
+                                claim_task(token, task['id'],sub_title)
+                            elif task['status'] == 'READY_FOR_VALIDATE':
+                                validate_task(token, task['id'],sub_title)
+                                time.sleep(5)
+                                claim_task(token, task['id'],sub_title)
+                            else:
+                                print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+
                     for subs in subSections:
                         title_task = subs.get('title')
                         print(f"Main Task Title : {title_task}")
