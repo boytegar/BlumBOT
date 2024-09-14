@@ -616,10 +616,11 @@ def main():
     
               
           """)
+    claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
+    # check_task_enable = input("want claim task? y/n  : ").strip().lower()
+    check_task_enable = 'n'
     while True:
-        claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()
-        # check_task_enable = input("want claim task? y/n  : ").strip().lower()
-        check_task_enable = 'n'
+        delete_all()
         queries = load_credentials()
         delay_time = random.randint(28800, 29000)
         start_time = time.time()
