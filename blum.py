@@ -608,14 +608,7 @@ def generate_token():
             print_("Generate Token Done!")
 
 def main():
-    
-    print(r"""
-              
-            Created By Snail S4NS Group
-    find new airdrop & bot here: t.me/sansxgroup
-    
-              
-          """)
+
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
@@ -851,6 +844,7 @@ def main():
             time.sleep(waktu_tunggu)
    
 def task_main():
+    delete_all()
     verif = input("want input verification y/n  : ").strip().lower()
     if verif == 'y':
         words = input("verification word : ").strip().upper()
