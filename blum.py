@@ -517,7 +517,7 @@ def check_daily_reward(token):
             try:
                 return response.json()
             except json.JSONDecodeError:
-                print(f"Json Error: {response.text}")
+                print_(f"Checkin Done: {response.text}")
                 return None
             # response.raise_for_status()  # Menangani status kode HTTP yang tidak sukses
             return None
