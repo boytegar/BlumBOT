@@ -607,6 +607,17 @@ def generate_token():
             save(user.get('id'), token)
             print_("Generate Token Done!")
 
+def get_verification():
+    url = 'https://raw.githubusercontent.com/boytegar/BlumBOT/refs/heads/master/verif.json'
+    data = requests.get(url=url)
+    return data.json()
+
+def find_by_id(json_data, id):
+    for key, value in json_data.items():
+        if key == id:
+            return value
+    return None
+
 def main():
 
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
@@ -844,11 +855,8 @@ def main():
             time.sleep(waktu_tunggu)
    
 def task_main():
+    
     delete_all()
-    verif = input("want input verification y/n  : ").strip().lower()
-    if verif == 'y':
-        words = input("verification word : ").strip().upper()
-
     queries = load_credentials()
     now = datetime.now().isoformat(" ").split(".")[0]
     for index, query in enumerate(queries, start=1):
@@ -903,6 +911,8 @@ def task_main():
                                     validationType = stask.get('validationType')
                                     if validationType == 'KEYWORD':
                                         time.sleep(2)
+                                        verif = get_verification()
+                                        words = find_by_id(verif, task['id'])
                                         validate_task(token, stask['id'],sub_title, word=words)
                                     time.sleep(5)
                                     claim_task(token, stask['id'],sub_title)
@@ -927,6 +937,8 @@ def task_main():
                                 start_task(token, task['id'],sub_title)
                                 validationType = task.get('validationType')
                                 if validationType == 'KEYWORD':
+                                    verif = get_verification()
+                                    words = find_by_id(verif, task['id'])
                                     time.sleep(2)
                                     validate_task(token, task['id'],sub_title, word=words)
                                 time.sleep(5)
@@ -959,6 +971,8 @@ def task_main():
                                     validationType = task.get('validationType')
                                     if validationType == 'KEYWORD':
                                         time.sleep(2)
+                                        verif = get_verification()
+                                        words = find_by_id(verif, task['id'])
                                         validate_task(token, task['id'],sub_title, word=words)
                                     time.sleep(5)
                                     claim_task(token, task['id'],sub_title)
