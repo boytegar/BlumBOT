@@ -913,13 +913,22 @@ def task_main():
                                         time.sleep(2)
                                         verif = get_verification()
                                         words = find_by_id(verif, task['id'])
+                                        print(f"Verification : {words}")
                                         validate_task(token, stask['id'],sub_title, word=words)
                                     time.sleep(5)
                                     claim_task(token, stask['id'],sub_title)
                                 elif task['status'] == 'READY_FOR_CLAIM':
                                     claim_task(token, stask['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_VALIDATE':
-                                    validate_task(token, stask['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_VERIFY': 
+                                    validationType = task.get('validationType')
+                                    if validationType == 'KEYWORD':
+                                        verif = get_verification()
+                                        words = find_by_id(verif, task['id'])
+                                        print(f"Verification : {words}")
+                                        time.sleep(2)
+                                        validate_task(token, task['id'],sub_title, word=words)
+                                    else:
+                                        validate_task(token, task['id'],sub_title)
                                     time.sleep(5)
                                     claim_task(token, stask['id'],sub_title)
                                 else:
@@ -939,14 +948,23 @@ def task_main():
                                 if validationType == 'KEYWORD':
                                     verif = get_verification()
                                     words = find_by_id(verif, task['id'])
+                                    print(f"Verification : {words}")
                                     time.sleep(2)
                                     validate_task(token, task['id'],sub_title, word=words)
                                 time.sleep(5)
                                 claim_task(token, task['id'],sub_title)
                             elif task['status'] == 'READY_FOR_CLAIM':
                                 claim_task(token, task['id'],sub_title)
-                            elif task['status'] == 'READY_FOR_VALIDATE':
-                                validate_task(token, task['id'],sub_title)
+                            elif task['status'] == 'READY_FOR_VERIFY':
+                                validationType = task.get('validationType')
+                                if validationType == 'KEYWORD':
+                                    verif = get_verification()
+                                    words = find_by_id(verif, task['id'])
+                                    print(f"Verification : {words}")
+                                    time.sleep(2)
+                                    validate_task(token, task['id'],sub_title, word=words)
+                                else:
+                                    validate_task(token, task['id'],sub_title)
                                 time.sleep(5)
                                 claim_task(token, task['id'],sub_title)
                             else:
@@ -973,13 +991,22 @@ def task_main():
                                         time.sleep(2)
                                         verif = get_verification()
                                         words = find_by_id(verif, task['id'])
+                                        print(f"Verification : {words}")
                                         validate_task(token, task['id'],sub_title, word=words)
                                     time.sleep(5)
                                     claim_task(token, task['id'],sub_title)
                                 elif task['status'] == 'READY_FOR_CLAIM':
                                     claim_task(token, task['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_VALIDATE':
-                                    validate_task(token, task['id'],sub_title)
+                                elif task['status'] == 'READY_FOR_VERIFY':
+                                    validationType = task.get('validationType')
+                                    if validationType == 'KEYWORD':
+                                        verif = get_verification()
+                                        words = find_by_id(verif, task['id'])
+                                        print(f"Verification : {words}")
+                                        time.sleep(2)
+                                        validate_task(token, task['id'],sub_title, word=words)
+                                    else:
+                                        validate_task(token, task['id'],sub_title)
                                     time.sleep(5)
                                     claim_task(token, task['id'],sub_title)
                                 else:
