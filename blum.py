@@ -76,6 +76,35 @@ def delete(id):
 def delete_all():
     open("tokens.json", "w").write(json.dumps({}, indent=4))
 
+
+def print_(word):
+    now = datetime.now().isoformat(" ").split(".")[0]
+    print(f"[{now}] {word}")
+
+def make_request(method, url, headers, json=None, data=None):
+    retry_count = 0
+    while True:
+        time.sleep(2)
+        if method.upper() == "GET":
+            response = requests.get(url, headers=headers, json=json)
+        elif method.upper() == "POST":
+            response = requests.post(url, headers=headers, json=json, data=data)
+        elif method.upper() == "PUT":
+            response = requests.put(url, headers=headers, json=json, data=data)
+        else:
+            raise ValueError("Invalid method.")
+        
+        if response.status_code >= 500:
+            if retry_count >= 4:
+                print_(f"Status Code: {response.status_code} | Server Down")
+                return None
+            retry_count += 1
+        elif response.status_code >= 400:
+            print_(f"Status Code: {response.status_code} | {response.text}")
+            return None
+        elif response.status_code >= 200:
+            return response
+
 def getuseragent(index):
     try:
         with open('useragent.txt', 'r') as f:
@@ -109,19 +138,19 @@ def check_tasks(token):
             
             for subs in subSections:
                 title_task = subs.get('title')
-                print(f"Main Task Title : {title_task}")
+                print_(f"Main Task Title : {title_task}")
                 tasks = subs.get('tasks')
                 for task in tasks:
                     sub_title = task.get('title',"")
                     if 'invite' in sub_title.lower():
-                        print(f"{sub_title} Skipping Quest")
+                        print_(f"{sub_title} Skipping Quest")
                     elif 'farm' in sub_title.lower():
-                        print(f"{sub_title} Skipping Quest")
+                        print_(f"{sub_title} Skipping Quest")
                     else:
                         if task['status'] == 'CLAIMED':
-                            print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
+                            print_(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
                         elif task['status'] == 'NOT_STARTED':
-                            print(f"Starting Task: {task['title']}")
+                            print_(f"Starting Task: {task['title']}")
                             start_task(token, task['id'],sub_title)
                             validationType = task.get('validationType')
                             if validationType == 'KEYWORD':
@@ -136,12 +165,12 @@ def check_tasks(token):
                             time.sleep(5)
                             claim_task(token, task['id'],sub_title)
                         else:
-                            print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+                            print_(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
     else:
-        print(f"Failed to get tasks")
+        print_(f"Failed to get tasks")
     
 
-def start_task(token, task_id,titlenya):
+def start_task(token, task_id, title):
     time.sleep(2)
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/start'
     headers = {
@@ -153,14 +182,14 @@ def start_task(token, task_id,titlenya):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post(url, headers=headers)
-        if response.status_code <= 210:
-            print(f"Task {titlenya} started")
+        response = make_request('post', url, headers=headers)
+        if response is not None:
+            print_(f"Task {title} started")
         else:
-            print(f"Failed to start task {titlenya}")
+            print_(f"Failed to start task {title}")
         return 
     except:
-        print(f"Failed to start task {titlenya} {response.status_code} ")
+        print_(f"Failed to start task {title} ")
 
 def validate_task(token, task_id, title, word=None):
     time.sleep(2)
@@ -175,18 +204,18 @@ def validate_task(token, task_id, title, word=None):
     }
     payload = {'keyword': word}
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code <= 210:
-            print(f"Task {title} validating")
+        response =  response = make_request('post',url, headers=headers, json=payload)
+        if response is not None:
+            print_(f"Task {title} validating")
         else:
-            print(f"Failed to validate task {title}")
+            print_(f"Failed to validate task {title}")
         return 
     except:
-        print(f"Failed to validate task {title} {response.status_code} ")
+        print_(f"Failed to validate task {title} ")
 
-def claim_task(token, task_id,titlenya):
+def claim_task(token, task_id,title):
     time.sleep(2)
-    print(f"Claiming task {titlenya}")
+    print_(f"Claiming task {title}")
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/claim'
     headers = {
         'Authorization': f'Bearer {token}',
@@ -197,13 +226,13 @@ def claim_task(token, task_id,titlenya):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post(url, headers=headers)
-        if response.status_code <= 210:
-            print(f"Task {titlenya} claimed")
+        response =  response = make_request('post',url, headers=headers)
+        if response is not None:
+            print_(f"Task {title} claimed")
         else:
-            print(f"Failed to claim task {titlenya}")
+            print_(f"Failed to claim task {title}")
     except:
-        print(f"Failed to claim task {titlenya} {response.status_code} ")
+        print_(f"Failed to claim task {title} ")
 
         
 def get_new_token(query_id):
@@ -218,27 +247,18 @@ def get_new_token(query_id):
         "referer": "https://telegram.blum.codes/"
     }
 
-    # Data yang akan dikirim dalam permintaan POST
     data = json.dumps({"query": query_id})
-
-    # URL endpoint
     url = "https://user-domain.blum.codes/api/v1/auth/provider/PROVIDER_TELEGRAM_MINI_APP"
-
-    # Mencoba mendapatkan token hingga 3 kali
-    for attempt in range(3):
-        time.sleep(2)
-        print(f"Getting Token...")
-        response = requests.post(url, headers=headers, data=data)
-        if response.status_code == 200:
-            print(f"Token Created")
-            response_json = response.json()
-            return response_json['token']['refresh']
-        else:
-            print(f"Failed get token, trying {attempt + 1}")
-    # Jika semua percobaan gagal
-
-    print(f"Failed get token after 3 trying.")
-    return None
+    time.sleep(2)
+    print_(f"Getting Token...")
+    response = make_request('post',url, headers=headers, data=data)
+    if response is not None:
+        print_(f"Token Created")
+        response_json = response.json()
+        return response_json['token']['refresh']
+    else:
+        print_(f"Failed get token")
+        return None
 
 # Fungsi untuk mendapatkan informasi pengguna
 def get_user_info(token):
@@ -250,23 +270,9 @@ def get_user_info(token):
         'origin': 'https://telegram.blum.codes',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
-    response = requests.get('https://gateway.blum.codes/v1/user/me', headers=headers)
-    if response.status_code == 200:
+    response =  response = make_request('get','https://gateway.blum.codes/v1/user/me', headers=headers)
+    if response is not None:
         return response.json()
-    else:
-        hasil = response.json()
-        if hasil['message'] == 'Token is invalid':
-            print(f"Token salah, mendapatkan token baru...")
-            new_token = get_new_token()
-            if new_token:
-                print(f"Token baru diperoleh, mencoba lagi...")
-                return get_user_info(new_token) 
-            else:
-                print(f"Gagal mendapatkan token baru.")
-                return None
-        else:
-            print(f"Gagal mendapatkan informasi user")
-            return None
 
 def get_balance(token):
     headers = {
@@ -276,23 +282,14 @@ def get_balance(token):
         'origin': 'https://telegram.blum.codes',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
-    for attempt in range(3):
-        time.sleep(2)
-        try:
-            response = requests.get('https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
-            if response.status_code == 200:
-                # print(f"Berhasil mendapatkan saldo")
-                return response.json()
-            else:
-                print(f"Gagal mendapatkan saldo, percobaan {attempt + 1}")
-        except requests.exceptions.ConnectionError as e:
-            print(f"Koneksi gagal, mencoba lagi {attempt + 1}")
-        except Exception as e:
-            print(f"Error: {str(e)}")
-        except:
-            print(f"Gagal mendapatkan saldo, mencoba lagi {attempt + 1}")
-    print(f"Gagal mendapatkan saldo setelah 3 percobaan.")
-    return None
+    try:
+        response =  response = make_request('get','https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
+        if response is not None:
+            return response.json()
+        else:
+            print_(f"Failed getting data balance")
+    except requests.exceptions.ConnectionError as e:
+        print_(f"Connection Failed ")
 
 def play_game(token):
     time.sleep(2)
@@ -305,18 +302,15 @@ def play_game(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post('https://game-domain.blum.codes/api/v1/game/play', headers=headers)
-        if response.status_code == 200:
+        response = make_request('post','https://game-domain.blum.codes/api/v1/game/play', headers=headers)
+        if response is not None:
             return response.json()
         else:
             return None
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal bermain game karena masalah koneksi: {e}")
     except Exception as e:
-        print(f"Gagal bermain game karena error: {e}")
-    return None
+        print_(f"Failed play game, Error {e}")
 
-def claim_game(token, game_id, points):
+def claim_game(token, game_id, point):
     time.sleep(2)
     url = "https://game-domain.blum.codes/api/v1/game/claim"
     headers = CaseInsensitiveDict()
@@ -327,15 +321,17 @@ def claim_game(token, game_id, points):
     headers["origin"] = "https://telegram.blum.codes"
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
-    data = f'{{"gameId":"{game_id}","points":{points}}}'
+    data = {"gameId":game_id,"points":point}
 
     try:
-        resp = requests.post(url, headers=headers, data=data)
-        return resp
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mengklaim hadiah game karena masalah koneksi: {e}")
+        response = make_request('post', url, headers=headers, json=data)
+        if response is not None:
+            return response
+        else:
+            return None
+    
     except Exception as e:
-        print(f"Gagal mengklaim hadiah game karena error: {e}")
+        print_(f"Failed Claim game, error: {e}")
     return None
 
 def get_game_id(token):
@@ -345,8 +341,7 @@ def get_game_id(token):
         while True:
             if trying == 0:
                 break
-            print("Play Game : Game ID is None, retrying...")
-            time.sleep(3)
+            print_("Play Game : Game ID is None, retrying...")
             game_response = play_game(token)
             if game_response is not None:
                 game_id = game_response.get('gameId', None)
@@ -356,7 +351,7 @@ def get_game_id(token):
                 return game_response['gameId']
                 break
             else:
-                print('Game id Not Found, trying to get')
+                print_('Game id Not Found, trying to get')
             trying -= 1
     else:
         return game_response['gameId']
@@ -372,20 +367,15 @@ def claim_balance(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        while True: 
-            time.sleep(2)
-            response = requests.post('https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
-            if response.status_code >= 500:
-                print(f"Error Code : {response.status_code}")
-            elif response.status_code >= 400:
-                print(response.json())
-                return None
-            elif response.status_code >= 200:
-                return response.json()
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mengklaim saldo karena masalah koneksi: {e}")
+        time.sleep(2)
+        response = make_request('post','https://game-domain.blum.codes/api/v1/farming/claim', headers=headers)
+        if response is not None:
+            return response.json()
+        else:
+            print_("Failed Claim Balance")
+
     except Exception as e:
-        print(f"Gagal mengklaim saldo karena error: {e}")
+        print_(f"Failed claim balance, error: {e}")
     return None
 
 def start_farming(token):
@@ -399,46 +389,16 @@ def start_farming(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        while True: 
-            time.sleep(2)
-            response = requests.post('https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
-            if response.status_code >= 500:
-                print(f"Error Code : {response.status_code}")
-            elif response.status_code >= 400:
-                print(response.json())
-                return None
-            elif response.status_code >= 200:
-                return response.json()
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal memulai farming karena masalah koneksi: {e}")
-    except Exception as e:
-        print(f"Gagal memulai farming karena error: {e}")
-    return None
-
-def refresh_token(old_refresh_token):
-    time.sleep(2)
-    url = 'https://gateway.blum.codes/v1/auth/refresh'
-    headers = {
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'Content-Type': 'application/json',
-        'origin': 'https://telegram.blum.codes',
-        'referer': 'https://telegram.blum.codes/'
-    }
-    data = {
-        'refresh': old_refresh_token
-    }
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
+ 
+        time.sleep(2)
+        response = make_request('post','https://game-domain.blum.codes/api/v1/farming/start', headers=headers)
+        if response is not None:
             return response.json()
         else:
-            print(f"Gagal refresh token untuk: {old_refresh_token}")
-            return None
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal refresh token karena masalah koneksi: {e}")
+            print_("Failed Claim Balance")
+
     except Exception as e:
-        print(f"Gagal refresh token karena error: {e}")
+        print_(f"Failed claim balance, error: {e}")
     return None
 
 def check_balance_friend(token):
@@ -458,12 +418,14 @@ def check_balance_friend(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.get('https://user-domain.blum.codes/api/v1/friends/balance', headers=headers)
-        return response.json()
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mendapatkan saldo teman karena masalah koneksi: {e}")
+        response = make_request('get', 'https://user-domain.blum.codes/api/v1/friends/balance', headers=headers)
+        if response is not None:
+            return response.json()
+        else:
+            print_("Failed Check ref")
+    
     except Exception as e:
-        print(f"Gagal mendapatkan saldo teman karena error: {e}")
+        print_(f"Failed Check ref, error: {e}")
     return None
 
 def claim_balance_friend(token):
@@ -477,18 +439,18 @@ def claim_balance_friend(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = requests.post('https://user-domain.blum.codes/api/v1/friends/claim', headers=headers)
-        return response.json()
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mengklaim saldo teman karena masalah koneksi: {e}")
+        response = make_request('post', 'https://user-domain.blum.codes/api/v1/friends/claim', headers=headers)
+        if response is not None:
+            return response.json()
+        else:
+            print_("Failed Claim ref Balance")
     except Exception as e:
-        print(f"Gagal mengklaim saldo teman karena error: {e}")
+        print_(f"Failed Claim ref, error: {e}")
     return None
 
 # cek daily 
 import json
 def check_daily_reward(token):
-    time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
         'accept': 'application/json, text/plain, */*',
@@ -504,27 +466,13 @@ def check_daily_reward(token):
         'sec-fetch-site': 'same-site'
     }
     try:
-        response = requests.post('https://game-domain.blum.codes/api/v1/daily-reward?offset=-420', headers=headers, timeout=10)
-        if response.status_code == 400:
-            try:
-                return response.json()
-            except json.JSONDecodeError:
-                if response.text == "OK":
-                    return response.text
-                # print(f"Json Error: {response.text}")
-                return None
+        response = make_request('post','https://game-domain.blum.codes/api/v1/daily-reward?offset=-420', headers=headers)
+        if response is not None:
+            return response.json()
         else:
-            try:
-                return response.json()
-            except json.JSONDecodeError:
-                print_(f"Checkin Done: {response.text}")
-                return None
-            # response.raise_for_status()  # Menangani status kode HTTP yang tidak sukses
             return None
-    except requests.exceptions.Timeout:
-        print(f"Gagal claim daily: Timeout")
     except requests.exceptions.RequestException as e:
-        return response.json()
+        return None
       
     return None
 
@@ -546,15 +494,13 @@ def check_tribe(token):
         'sec-fetch-site': 'same-site'
     }
     try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
+        response = make_request('get', url, headers=headers)
+        if response is not None:
             return response.json()
         else:
             return None
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mengklaim saldo teman karena masalah koneksi: {e}")
     except Exception as e:
-        print(f"Gagal mengklaim saldo teman karena error: {e}")
+        print_(f"Failed Check Tribe, error: {e}")
     return None
 
 
@@ -575,23 +521,21 @@ def join_tribe(token):
         'sec-fetch-site': 'same-site'
     }
     try:
-        response = requests.post(url, headers=headers)
-        if response.status_code == 200:
+        response = make_request('post', url, headers=headers)
+        if response is not None:
             return "OK"
         else:
-            js = response.json()
-            print(js.get('message'))
+            js = response
+            print_(js.get('message'))
             return None
-    except requests.exceptions.ConnectionError as e:
-        print(f"Gagal mengklaim saldo teman karena masalah koneksi: {e}")
     except Exception as e:
-        print(f"Gagal mengklaim saldo teman karena error: {e}")
+        print_(f"Failed join tribe, error: {e}")
     return None
 checked_tasks = {}
 
 def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
-    print(f"[{now}] {word}")
+    print(f"[{now}] | {word}")
 
 def generate_token():
     queries = load_credentials()
@@ -643,29 +587,29 @@ def main():
                 save(user.get('id'), token)
                 print_("Generate Token Done!")
             
-            print(f"Getting Info....")
+            print_(f"Getting Info....")
             balance_info = get_balance(token)
             if balance_info is None:
-                print(f"Failed to Get information")
+                print_(f"Failed to Get information")
                 continue
             else:
                 available_balance_before = balance_info['availableBalance']  
 
                 balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
 
-                print(f"[{now}] Balance       : {balance_before}")
-                print(f"[{now}] Tiket Game    : {balance_info['playPasses']}")
+                print_(f"Balance       : {balance_before}")
+                print_(f"Tiket Game    : {balance_info['playPasses']}")
                 data_tribe = check_tribe(token)
                 time.sleep(2)
                 if data_tribe is not None:
-                    print(f"[{now}] Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
+                    print_(f"Tribe         : {data_tribe.get('title')} | Member : {data_tribe.get('countMembers')} | Balance : {data_tribe.get('earnBalance')}")
                 else:
-                    print(f'[{now}] Tribe not Found')
+                    print_(f'Tribe not Found')
                     time.sleep(1)
-                    print(f'[{now}] Joininng Tribe...')
+                    print_(f'Joininng Tribe...')
                     join = join_tribe(token)
                     if join is not None:
-                        print(f'[{now}] Join Tribe Done')
+                        print_(f'Join Tribe Done')
 
                 farming_info = balance_info.get('farming')
         
@@ -679,99 +623,102 @@ def main():
                     minutes_remaining = int((time_difference.total_seconds() % 3600) // 60)
                     farming_balance = farming_info['balance']
                     farming_balance_formated = f"{float(farming_balance):,.0f}".replace(",", ".")
-                    print(f"[{now}] Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
+                    print_(f"Claim Balance : {hours_remaining} jam {minutes_remaining} menit | Balance: {farming_balance_formated}")
 
                     if hours_remaining < 0:
-                        print(f"[{now}] Claim Balance: Claiming balance...")
+                        print_(f"Claim Balance: Claiming balance...")
                         claim_response = claim_balance(token)
-                        if claim_response:
-                            print(f"[{now}] Claim Balance : Claimed: {claim_response['availableBalance']}                ")
-                            print(f"[{now}] Claim Balance : Starting farming...")
+                        if claim_response is not None:
+                            print_(f"Claim Balance : Claimed: {claim_response['availableBalance']}                ")
+                            print_(f"Claim Balance : Starting farming...")
                             start_response = start_farming(token)
                             if start_response:
-                                print(f"[{now}] Claim Balance : Farming started.")
+                                print_(f"Claim Balance : Farming started.")
                             else:
-                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                                print_(f"Claim Balance : Failed start farming")
                         else:
-                            print(f"[{now}] Claim Balance : Failed claim", claim_response)
+                            print_(f"Claim Balance : Failed claim")
                             start_response = start_farming(token)
-                            if start_response:
-                                print(f"[{now}] Claim Balance : Farming started.")
+                            if start_response is not None:
+                                print_(f"Claim Balance : Farming started.")
                             else:
-                                print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                                print_(f"Claim Balance : Failed start farming")
                 else:
-                    print(f"[{now}] Claim Balance : Gagal mendapatkan informasi farming")
-                    print(f"[{now}] Claim Balance : Claiming balance...")
+                    print_(f"Claim Balance : failed get farming information")
+                    print_(f"Claim Balance : Claiming balance...")
                     claim_response = claim_balance(token)
-                    if claim_response:
-                        print(f"[{now}] Claim Balance : Claimed               ")
-                        print(f"[{now}] Claim Balance : Starting farming...")
+                    if claim_response is not None:
+                        print_(f"Claim Balance : Claimed               ")
+                        print_(f"Claim Balance : Starting farming...")
                         start_response = start_farming(token)
                         if start_response:
-                            print(f"[{now}] Claim Balance : Farming started.")
+                            print_(f"Claim Balance : Farming started.")
                         else:
-                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                            print_(f"Claim Balance : Failed start farming")
                     else:
-                        print(f"[{now}] Claim Balance : Gagal claim", claim_response)
+                        print_(f"Claim Balance : failed claim")
                         start_response = start_farming(token)
                         if start_response:
-                            print(f"[{now}] Claim Balance : Farming started.")
+                            print_(f"Claim Balance : Farming started.")
                         else:
-                            print(f"[{now}] Claim Balance : Failed start farming", start_response)
+                            print_(f"Claim Balance : Failed start farming")
 
-            print(f"[{now}] Daily Reward : Checking daily reward...")
+            print_(f"Daily Reward : Checking daily reward...")
             daily_reward_response = check_daily_reward(token)
             if daily_reward_response is None:
-                print(f"[{now}] Daily Reward : Failed Check Daily Reward.")
+                print_(f"Daily Reward : Failed Check Daily Reward.")
             else:
                 if daily_reward_response.get('message') == 'same day':
-                    print(f"[{now}] Daily Reward : Daily Reward Claimed")
+                    print_(f"Daily Reward : Daily Reward Claimed")
                 elif daily_reward_response.get('message') == 'OK':
-                    print(f"[{now}] Daily Reward : Daily Reward Done Claim!")
+                    print_(f"Daily Reward : Daily Reward Done Claim!")
                 else:
-                    print(f"[{now}] Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
+                    print_(f"Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
  
-            print(f"[{now}] Reff Balance : Checking reff balance...")
+            print_(f"Reff Balance : Checking reff balance...")
             if claim_ref_enable == 'y':
                 friend_balance = check_balance_friend(token)
-                if friend_balance:
+                if friend_balance is not None:
                     if friend_balance['canClaim']:
-                        print(f"[{now}] Reff Balance: {friend_balance['amountForClaim']}")
-                        print(f"[{now}] Claiming Ref balance.....")
+                        print_(f"Reff Balance: {friend_balance['amountForClaim']}")
+                        print_(f"Claiming Ref balance.....")
                         friend_balance = friend_balance.get('amountForClaim',"0")
                         if friend_balance != "0":
                             claim_friend_balance = claim_balance_friend(token)
-                            print(claim_friend_balance)
                             if claim_friend_balance:
                                 claimed_amount = claim_friend_balance['claimBalance']
-                                print(f"[{now}] Reff Balance : Claim Done : {claimed_amount}")
+                                print_(f"Reff Balance : Claim Done : {claimed_amount}")
                             else:
-                                print(f"[{now}] Reff Balance : Failed Claim")
+                                print_(f"Reff Balance : Failed Claim")
                         else:
                             print_('Not enough reff balance')
                     else:
                         can_claim_at = friend_balance.get('canClaimAt')
-                        if can_claim_at:
+                        if can_claim_at is not None:
                             claim_time = datetime.fromtimestamp(int(can_claim_at) / 1000)
                             current_time = datetime.now()
                             time_diff = claim_time - current_time
                             hours, remainder = divmod(int(time_diff.total_seconds()), 3600)
                             minutes, seconds = divmod(remainder, 60)
-                            print(f"[{now}] Reff Balance : Claimed inf {hours} hours {minutes} minutes")
+                            print_(f"Reff Balance : Claimed inf {hours} hours {minutes} minutes")
                         else:
-                            print(f"[{now}] Reff Balance : False                                 ")
+                            print_(f"Reff Balance : False                                 ")
                 else:
-                    print(f"[{now}] Reff Balance : False cek reff balance")
+                    print_(f"Reff Balance : False cek reff balance")
             else:
-                print(f"[{now}] Reff Balance : Skipped !                    ")
+                print_(f"Reff Balance : Skipped !                    ")
         # break    
         total_blum = 0
         for index, query in enumerate(queries, start=1):
+            mid_time = time.time()
+            waktu_tunggu = delay_time - (mid_time-start_time)
+            if waktu_tunggu <= 0:
+                break
             time.sleep(3)
             parse = parse_query(query)
             user = parse.get('user')
             token = get(user['id'])
-            print_(f"Account {index}  | {parse.get('user')['username']}")
+            print_(f"XXXX==XXXX Account {index}  | {user.get('username','')} XXXX==XXXX")
             if token == None:
                 print_("Generate token...")
                 time.sleep(2)
@@ -782,50 +729,49 @@ def main():
             balance_info = get_balance(token)
             available_balance_before = balance_info['availableBalance'] 
             balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
-            if check_task_enable == 'y':  
-                print(f"[{now}] Checking tasks...")
-                check_tasks(token)
+            # if check_task_enable == 'y':  
+            #     print_(f"Checking tasks...")
+            #     check_tasks(token)
             # continue
 
             if balance_info.get('playPasses') <= 0:
                 total_blum += float(available_balance_before) 
-                print('No have ticket For Playing games')
+                print_('No have ticket For Playing games')
 
             while balance_info['playPasses'] > 0:
-                now = datetime.now().isoformat(" ").split(".")[0]
-                print(f"[{now}] Play Game : Playing game...")
+                print_(f"Play Game : Playing game...")
                 gameId = get_game_id(token)
-                print(f"[{now}] Play Game : Checking game...")
+                print_(f"Play Game : Checking game...")
                 taps = random.randint(260, 280)
                 delays = random.randint(30, 40)
                 time.sleep(delays)
                 claim_response = claim_game(token, gameId, taps)
                 if claim_response is None:
-                    print(f"[{now}] Play Game : Game still running waiting...")
+                    print_(f"Play Game : Game still running waiting...")
                 while True:
                     if claim_response.text == '{"message":"game session not finished"}':
                         time.sleep(10)  
-                        print(f"[{now}] Play Game : Game still running waiting....")
+                        print_(f"[{now}] Play Game : Game still running waiting....")
                         claim_response = claim_game(token, gameId, taps)
                         if claim_response is None:
-                            print(f"[{now}] Play Game : Failed Claim game point, trying...")
+                            print_(f"[{now}] Play Game : Failed Claim game point, trying...")
                     elif claim_response.text == '{"message":"game session not found"}':
-                        print(f"[{now}] Play Game : Game is Done")
+                        print_(f"[{now}] Play Game : Game is Done")
                         mid_time = time.time()
                         waktu_tunggu = delay_time - (mid_time-start_time)
                         if waktu_tunggu <= 0:
                             break
                         break
                     elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
-                        print(f"[{now}] Play Game : Token Not Valid, Take new token...")
+                        print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
                         continue  
                     else:
-                        print(f"Play Game : Game is Done: {claim_response.text}")
+                        print_(f"Play Game : Game is Done: {claim_response.text}")
                         break
-               
+
                 balance_info = get_balance(token) 
                 if balance_info is None: 
-                    print(f"[{now}] Play Game Gagal mendapatkan informasi tiket")
+                    print_(f"Play Game failed get information ticket")
                 else:
                     available_balance_after = balance_info['availableBalance'] 
                     
@@ -833,19 +779,19 @@ def main():
                     after =  float(available_balance_after)
                     
                     total_balance = after - before  
-                    print(f"[{now}] Play Game: You Got Total {total_balance} From Playing Game")
+                    print_(f"Play Game: You Got Total {total_balance} From Playing Game")
                     if balance_info['playPasses'] > 0:
-                        print(f"[{now}] Play Game : Tiket still ready, Playing game again...")
+                        print_(f"Play Game : Tiket still ready, Playing game again...")
                         continue  
                     else:
                         total_blum += before
                         total_blum += total_balance
-                        print(f"[{now}] Play Game : Tiket Finished.")
+                        print_(f"Play Game : Tiket Finished.")
                         break
 
         end_time = time.time()
         delete_all()
-        print(f"========= ALL ID DONE =========")
+        print_(f"========= ALL ID DONE =========")
         total_acc = len(queries)
         
         waktu_tunggu = delay_time - (end_time-start_time)
@@ -853,9 +799,41 @@ def main():
         printdelay(waktu_tunggu)
         if waktu_tunggu >= 0:
             time.sleep(waktu_tunggu)
-   
-def task_main():
-    
+
+def completed_task(token, stask):
+    sub_title = stask.get('title',"")
+    if stask.get('status','') == 'CLAIMED':
+        print_(f"Task {sub_title} claimed  | Status: {stask.get('status','')} | Reward: {stask['reward']}")
+    elif stask.get('status','') == 'NOT_STARTED':
+        print_(f"Starting Task: {stask['title']}")
+        start_task(token, stask['id'],sub_title)
+        validationType = stask.get('validationType')
+        if validationType == 'KEYWORD':
+            time.sleep(2)
+            verif = get_verification()
+            words = find_by_id(verif, stask['id'])
+            print_(f"Verification : {words}")
+            validate_task(token, stask['id'],sub_title, word=words)
+        time.sleep(5)
+        claim_task(token, stask['id'],sub_title)
+    elif stask.get('status','') == 'READY_FOR_CLAIM':
+        claim_task(token, stask['id'],sub_title)
+    elif stask.get('status','') == 'READY_FOR_VERIFY': 
+        validationType = stask.get('validationType')
+        if validationType == 'KEYWORD':
+            verif = get_verification()
+            words = find_by_id(verif, stask['id'])
+            print_(f"Verification : {words}")
+            time.sleep(2)
+            validate_task(token, stask['id'],sub_title, word=words)
+        else:
+            validate_task(token, stask['id'],sub_title)
+        time.sleep(5)
+        claim_task(token, stask['id'],sub_title)
+    else:
+        print_(f"Task already started: {sub_title} | Status: {stask.get('status','')} | Reward: {stask['reward']}")
+
+def task_main():  
     delete_all()
     queries = load_credentials()
     now = datetime.now().isoformat(" ").split(".")[0]
@@ -864,7 +842,7 @@ def task_main():
             parse = parse_query(query)
             user = parse.get('user')
             token = get(user['id'])
-            print_(f"Account {index}  | {parse.get('user')['username']}")
+            print_(f"[ === Account {index}  | {parse.get('user')['username']} === ]")
             if token == None:
                 print_("Generate token...")
                 time.sleep(2)
@@ -872,7 +850,7 @@ def task_main():
                 save(user.get('id'), token)
                 print_("Generate Token Done!")
 
-            print(f"[{now}] Checking tasks...")
+            print_(f"Checking tasks...")
 
             time.sleep(2)
             headers = {
@@ -884,135 +862,54 @@ def task_main():
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
             }
     
-            response = requests.get('https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
-            if response.status_code == 200:
+            response = make_request('get','https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
+            if response is not None:
                 mains = response.json()
                 for main in mains:
                     main_tasks = main.get('tasks',[])
                     subSections = main.get('subSections',[])
                     title = main.get('title', "")
-                    print_(f"Title : {title}")
-                    for task in main_tasks:
-                        sub_title = task.get('title',"")
-
-                        subtask = task.get('subTasks',[])
-                        for stask in subtask:
-                            sub_title = stask.get('title',"")
+                    if title == "New":
+                        print_(f"Title : {title} Skip")
+                    else:
+                        print_(f"Title : {title} Start")
+                        for task in main_tasks:
+                            sub_title = task.get('title',"")
+                            subtask = task.get('subTasks',[])
+                            for stask in subtask:
+                                sub_title = stask.get('title',"")
+                                if 'invite' in sub_title.lower():
+                                    print_(f"{sub_title} Skipping Quest")
+                                elif 'farm' in sub_title.lower():
+                                    print_(f"{sub_title} Skipping Quest")
+                                else:
+                                    completed_task(token, stask)
+                            
                             if 'invite' in sub_title.lower():
-                                print(f"{sub_title} Skipping Quest")
+                                print_(f"{sub_title} Skipping Quest")
                             elif 'farm' in sub_title.lower():
-                                print(f"{sub_title} Skipping Quest")
+                                print_(f"{sub_title} Skipping Quest")
                             else:
-                                if stask['status'] == 'CLAIMED':
-                                    print(f"Task {title_task} claimed  | Status: {stask['status']} | Reward: {stask['reward']}")
-                                elif stask['status'] == 'NOT_STARTED':
-                                    print(f"Starting Task: {stask['title']}")
-                                    start_task(token, stask['id'],sub_title)
-                                    validationType = stask.get('validationType')
-                                    if validationType == 'KEYWORD':
-                                        time.sleep(2)
-                                        verif = get_verification()
-                                        words = find_by_id(verif, task['id'])
-                                        print(f"Verification : {words}")
-                                        validate_task(token, stask['id'],sub_title, word=words)
-                                    time.sleep(5)
-                                    claim_task(token, stask['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_CLAIM':
-                                    claim_task(token, stask['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_VERIFY': 
-                                    validationType = task.get('validationType')
-                                    if validationType == 'KEYWORD':
-                                        verif = get_verification()
-                                        words = find_by_id(verif, task['id'])
-                                        print(f"Verification : {words}")
-                                        time.sleep(2)
-                                        validate_task(token, task['id'],sub_title, word=words)
-                                    else:
-                                        validate_task(token, task['id'],sub_title)
-                                    time.sleep(5)
-                                    claim_task(token, stask['id'],sub_title)
-                                else:
-                                    print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
-
-                        if 'invite' in sub_title.lower():
-                            print(f"{sub_title} Skipping Quest")
-                        elif 'farm' in sub_title.lower():
-                            print(f"{sub_title} Skipping Quest")
-                        else:
-                            if task['status'] == 'CLAIMED':
-                                print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
-                            elif task['status'] == 'NOT_STARTED':
-                                print(f"Starting Task: {task['title']}")
-                                start_task(token, task['id'],sub_title)
-                                validationType = task.get('validationType')
-                                if validationType == 'KEYWORD':
-                                    verif = get_verification()
-                                    words = find_by_id(verif, task['id'])
-                                    print(f"Verification : {words}")
-                                    time.sleep(2)
-                                    validate_task(token, task['id'],sub_title, word=words)
-                                time.sleep(5)
-                                claim_task(token, task['id'],sub_title)
-                            elif task['status'] == 'READY_FOR_CLAIM':
-                                claim_task(token, task['id'],sub_title)
-                            elif task['status'] == 'READY_FOR_VERIFY':
-                                validationType = task.get('validationType')
-                                if validationType == 'KEYWORD':
-                                    verif = get_verification()
-                                    words = find_by_id(verif, task['id'])
-                                    print(f"Verification : {words}")
-                                    time.sleep(2)
-                                    validate_task(token, task['id'],sub_title, word=words)
-                                else:
-                                    validate_task(token, task['id'],sub_title)
-                                time.sleep(5)
-                                claim_task(token, task['id'],sub_title)
-                            else:
-                                print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+                                completed_task(token, task)
 
                     for subs in subSections:
-                        title_task = subs.get('title')
-                        print(f"Main Task Title : {title_task}")
-                        tasks = subs.get('tasks')
-                        for task in tasks:
-                            sub_title = task.get('title',"")
-                            if 'invite' in sub_title.lower():
-                                print(f"{sub_title} Skipping Quest")
-                            elif 'farm' in sub_title.lower():
-                                print(f"{sub_title} Skipping Quest")
-                            else:
-                                if task['status'] == 'CLAIMED':
-                                    print(f"Task {title_task} claimed  | Status: {task['status']} | Reward: {task['reward']}")
-                                elif task['status'] == 'NOT_STARTED':
-                                    print(f"Starting Task: {task['title']}")
-                                    start_task(token, task['id'],sub_title)
-                                    validationType = task.get('validationType')
-                                    if validationType == 'KEYWORD':
-                                        time.sleep(2)
-                                        verif = get_verification()
-                                        words = find_by_id(verif, task['id'])
-                                        print(f"Verification : {words}")
-                                        validate_task(token, task['id'],sub_title, word=words)
-                                    time.sleep(5)
-                                    claim_task(token, task['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_CLAIM':
-                                    claim_task(token, task['id'],sub_title)
-                                elif task['status'] == 'READY_FOR_VERIFY':
-                                    validationType = task.get('validationType')
-                                    if validationType == 'KEYWORD':
-                                        verif = get_verification()
-                                        words = find_by_id(verif, task['id'])
-                                        print(f"Verification : {words}")
-                                        time.sleep(2)
-                                        validate_task(token, task['id'],sub_title, word=words)
-                                    else:
-                                        validate_task(token, task['id'],sub_title)
-                                    time.sleep(5)
-                                    claim_task(token, task['id'],sub_title)
+                        title = subs.get('title')
+                        if title == "New":
+                            print_(f"Title : {title} Skip")
+                        else:
+                            print_(f"Title : {title} Start")
+                            print_(f"Main Task Title : {title}")
+                            tasks = subs.get('tasks')
+                            for task in tasks:
+                                sub_title = task.get('title',"")
+                                if 'invite' in sub_title.lower():
+                                    print_(f"{sub_title} Skipping Quest")
+                                elif 'farm' in sub_title.lower():
+                                    print_(f"{sub_title} Skipping Quest")
                                 else:
-                                    print(f"Task already started: {sub_title} | Status: {task['status']} | Reward: {task['reward']}")
+                                    completed_task(token, task)
             else:
-                print(f"Failed to get tasks")
+                print_(f"Failed to get tasks")
             # continue
 
 def start():
