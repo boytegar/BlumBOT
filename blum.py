@@ -542,7 +542,7 @@ def generate_token():
     for index, query in enumerate(queries, start=1):
         parse = parse_query(query)
         user = parse.get('user')
-        print_(f"Account {index}  | {parse.get('user')['username']}")
+        print_(f"Account {index}  | {user.get('username','')}")
         token = get(user['id'])
         if token == None:
             print_("Generate token...")
@@ -578,7 +578,7 @@ def main():
             parse = parse_query(query)
             user = parse.get('user')
             time.sleep(2)
-            print_(f"===== Account {index}  | {parse.get('user')['username']} =====")
+            print_(f"===== Account {index}  | {user.get('username','')} =====")
             token = get(user['id'])
             if token == None:
                 print_("Generate token...")
@@ -842,7 +842,7 @@ def task_main():
             parse = parse_query(query)
             user = parse.get('user')
             token = get(user['id'])
-            print_(f"[ === Account {index}  | {parse.get('user')['username']} === ]")
+            print_(f"[ === Account {index}  | {user.get('username','')} === ]")
             if token == None:
                 print_("Generate token...")
                 time.sleep(2)
