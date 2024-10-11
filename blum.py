@@ -533,6 +533,32 @@ def join_tribe(token):
     return None
 checked_tasks = {}
 
+def elig_dogs(token):
+    url = 'https://game-domain.blum.codes/api/v2/game/eligibility/dogs_drop'
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.9',
+        'origin': 'https://telegram.blum.codes',
+        'content-length': '0',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
+        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site'
+    }
+    try:
+        response = make_request('get', url, headers=headers)
+        if response is not None:
+            data = response.json()
+            print_(f"Eligible Dogs Drop: {data.get('eligible',False)}")
+
+    except Exception as e:
+        print_(f"Failed join tribe, error: {e}")
+    return None
+
 def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
     print(f"[{now}] | {word}")
@@ -567,6 +593,7 @@ def main():
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
+    selector_game = 'n'
     while True:
         delete_all()
         queries = load_credentials()
@@ -674,7 +701,8 @@ def main():
                     print_(f"Daily Reward : Daily Reward Done Claim!")
                 else:
                     print_(f"Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
- 
+                    
+            elig_dogs(token)
             print_(f"Reff Balance : Checking reff balance...")
             if claim_ref_enable == 'y':
                 friend_balance = check_balance_friend(token)
@@ -709,85 +737,86 @@ def main():
                 print_(f"Reff Balance : Skipped !                    ")
         # break    
         total_blum = 0
-        for index, query in enumerate(queries, start=1):
-            mid_time = time.time()
-            waktu_tunggu = delay_time - (mid_time-start_time)
-            if waktu_tunggu <= 0:
-                break
-            time.sleep(3)
-            parse = parse_query(query)
-            user = parse.get('user')
-            token = get(user['id'])
-            print_(f"XXXX==XXXX Account {index}  | {user.get('username','')} XXXX==XXXX")
-            if token == None:
-                print_("Generate token...")
-                time.sleep(2)
-                token = get_new_token(query)
-                save(user.get('id'), token)
-                print_("Generate Token Done!")
+        if selector_game =='y':
+            for index, query in enumerate(queries, start=1):
+                mid_time = time.time()
+                waktu_tunggu = delay_time - (mid_time-start_time)
+                if waktu_tunggu <= 0:
+                    break
+                time.sleep(3)
+                parse = parse_query(query)
+                user = parse.get('user')
+                token = get(user['id'])
+                print_(f"XXXX==XXXX Account {index}  | {user.get('username','')} XXXX==XXXX")
+                if token == None:
+                    print_("Generate token...")
+                    time.sleep(2)
+                    token = get_new_token(query)
+                    save(user.get('id'), token)
+                    print_("Generate Token Done!")
 
-            balance_info = get_balance(token)
-            available_balance_before = balance_info['availableBalance'] 
-            balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
-            # if check_task_enable == 'y':  
-            #     print_(f"Checking tasks...")
-            #     check_tasks(token)
-            # continue
+                balance_info = get_balance(token)
+                available_balance_before = balance_info['availableBalance'] 
+                balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
+                # if check_task_enable == 'y':  
+                #     print_(f"Checking tasks...")
+                #     check_tasks(token)
+                # continue
 
-            if balance_info.get('playPasses') <= 0:
-                total_blum += float(available_balance_before) 
-                print_('No have ticket For Playing games')
+                if balance_info.get('playPasses') <= 0:
+                    total_blum += float(available_balance_before) 
+                    print_('No have ticket For Playing games')
 
-            while balance_info['playPasses'] > 0:
-                print_(f"Play Game : Playing game...")
-                gameId = get_game_id(token)
-                print_(f"Play Game : Checking game...")
-                taps = random.randint(260, 280)
-                delays = random.randint(30, 40)
-                time.sleep(delays)
-                claim_response = claim_game(token, gameId, taps)
-                if claim_response is None:
-                    print_(f"Play Game : Game still running waiting...")
-                while True:
-                    if claim_response.text == '{"message":"game session not finished"}':
-                        time.sleep(10)  
-                        print_(f"[{now}] Play Game : Game still running waiting....")
-                        claim_response = claim_game(token, gameId, taps)
-                        if claim_response is None:
-                            print_(f"[{now}] Play Game : Failed Claim game point, trying...")
-                    elif claim_response.text == '{"message":"game session not found"}':
-                        print_(f"[{now}] Play Game : Game is Done")
-                        mid_time = time.time()
-                        waktu_tunggu = delay_time - (mid_time-start_time)
-                        if waktu_tunggu <= 0:
+                while balance_info['playPasses'] > 0:
+                    print_(f"Play Game : Playing game...")
+                    gameId = get_game_id(token)
+                    print_(f"Play Game : Checking game...")
+                    taps = random.randint(260, 280)
+                    delays = random.randint(30, 40)
+                    time.sleep(delays)
+                    claim_response = claim_game(token, gameId, taps)
+                    if claim_response is None:
+                        print_(f"Play Game : Game still running waiting...")
+                    while True:
+                        if claim_response.text == '{"message":"game session not finished"}':
+                            time.sleep(10)  
+                            print_(f"[{now}] Play Game : Game still running waiting....")
+                            claim_response = claim_game(token, gameId, taps)
+                            if claim_response is None:
+                                print_(f"[{now}] Play Game : Failed Claim game point, trying...")
+                        elif claim_response.text == '{"message":"game session not found"}':
+                            print_(f"[{now}] Play Game : Game is Done")
+                            mid_time = time.time()
+                            waktu_tunggu = delay_time - (mid_time-start_time)
+                            if waktu_tunggu <= 0:
+                                break
                             break
-                        break
-                    elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
-                        print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
-                        continue  
-                    else:
-                        print_(f"Play Game : Game is Done: {claim_response.text}")
-                        break
+                        elif 'message' in claim_response and claim_response['message'] == 'Token is invalid':
+                            print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
+                            continue  
+                        else:
+                            print_(f"Play Game : Game is Done: {claim_response.text}")
+                            break
 
-                balance_info = get_balance(token) 
-                if balance_info is None: 
-                    print_(f"Play Game failed get information ticket")
-                else:
-                    available_balance_after = balance_info['availableBalance'] 
-                    
-                    before = float(available_balance_before) 
-                    after =  float(available_balance_after)
-                    
-                    total_balance = after - before  
-                    print_(f"Play Game: You Got Total {total_balance} From Playing Game")
-                    if balance_info['playPasses'] > 0:
-                        print_(f"Play Game : Tiket still ready, Playing game again...")
-                        continue  
+                    balance_info = get_balance(token) 
+                    if balance_info is None: 
+                        print_(f"Play Game failed get information ticket")
                     else:
-                        total_blum += before
-                        total_blum += total_balance
-                        print_(f"Play Game : Tiket Finished.")
-                        break
+                        available_balance_after = balance_info['availableBalance'] 
+                        
+                        before = float(available_balance_before) 
+                        after =  float(available_balance_after)
+                        
+                        total_balance = after - before  
+                        print_(f"Play Game: You Got Total {total_balance} From Playing Game")
+                        if balance_info['playPasses'] > 0:
+                            print_(f"Play Game : Tiket still ready, Playing game again...")
+                            continue  
+                        else:
+                            total_blum += before
+                            total_blum += total_balance
+                            print_(f"Play Game : Tiket Finished.")
+                            break
 
         end_time = time.time()
         delete_all()
