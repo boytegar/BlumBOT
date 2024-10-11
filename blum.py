@@ -594,6 +594,7 @@ def main():
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
     selector_game = 'n'
+    total_blum = 0
     while True:
         delete_all()
         queries = load_credentials()
@@ -623,7 +624,7 @@ def main():
                 available_balance_before = balance_info['availableBalance']  
 
                 balance_before = f"{float(available_balance_before):,.0f}".replace(",", ".")
-
+                total_blum += float(available_balance_before)
                 print_(f"Balance       : {balance_before}")
                 print_(f"Tiket Game    : {balance_info['playPasses']}")
                 data_tribe = check_tribe(token)
@@ -701,7 +702,7 @@ def main():
                     print_(f"Daily Reward : Daily Reward Done Claim!")
                 else:
                     print_(f"Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
-                    
+
             elig_dogs(token)
             print_(f"Reff Balance : Checking reff balance...")
             if claim_ref_enable == 'y':
@@ -736,7 +737,7 @@ def main():
             else:
                 print_(f"Reff Balance : Skipped !                    ")
         # break    
-        total_blum = 0
+        
         if selector_game =='y':
             for index, query in enumerate(queries, start=1):
                 mid_time = time.time()
