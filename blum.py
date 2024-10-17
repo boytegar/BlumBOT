@@ -321,7 +321,6 @@ def claim_game(token, game_id, point, dogs):
     headers["origin"] = "https://telegram.blum.codes"
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
-    print(dogs)
     data = create_payload(game_id=game_id, point=point, dogs=dogs)
     payload = {'payload' : data}
     try:
@@ -604,7 +603,6 @@ def create_payload(game_id, point, dogs):
     response = requests.post(url, json=payload)
     if response is not None:
         data = response.json()
-        print(data)
         if "payload" in data:
             return data["payload"]
         return None
