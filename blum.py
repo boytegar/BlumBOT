@@ -623,7 +623,7 @@ def main():
     while True:
         delete_all()
         queries = load_credentials()
-        delay_time = random.randint(28800, 29000)
+        delay_time = random.randint(3600, 3620)*8
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
         for index, query in enumerate(queries, start=1):
@@ -826,7 +826,7 @@ def main():
                             print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
                             continue  
                         else:
-                            print_(f"Play Game : Game is Done: Reward {taps} {dogs}")
+                            print_(f"Play Game : Game is Done, Reward Blum Point : {taps} , Dogs : {dogs}")
                             break
 
                     balance_info = get_balance(token) 
