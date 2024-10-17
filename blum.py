@@ -96,7 +96,7 @@ def make_request(method, url, headers, json=None, data=None):
         
         if response.status_code >= 500:
             if retry_count >= 4:
-                print_(f"Status Code: {response.status_code} | Server Down")
+                print_(f"Status Code: {response.status_code} | {response.text}")
                 return None
             retry_count += 1
         elif response.status_code >= 400:
@@ -302,7 +302,7 @@ def play_game(token):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
     try:
-        response = make_request('post','https://game-domain.blum.codes/api/v1/game/play', headers=headers)
+        response = make_request('post','https://game-domain.blum.codes/api/v2/game/play', headers=headers)
         if response is not None:
             return response.json()
         else:
@@ -310,9 +310,9 @@ def play_game(token):
     except Exception as e:
         print_(f"Failed play game, Error {e}")
 
-def claim_game(token, game_id, point):
+def claim_game(token, game_id, point, dogs):
     time.sleep(2)
-    url = "https://game-domain.blum.codes/api/v1/game/claim"
+    url = "https://game-domain.blum.codes/api/v2/game/claim"
     headers = CaseInsensitiveDict()
     headers["accept"] = "application/json, text/plain, */*"
     headers["accept-language"] = "en-US,en;q=0.9"
@@ -321,10 +321,11 @@ def claim_game(token, game_id, point):
     headers["origin"] = "https://telegram.blum.codes"
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
-    data = {"gameId":game_id,"points":point}
-
+    print(dogs)
+    data = create_payload(game_id=game_id, point=point, dogs=dogs)
+    payload = {'payload' : data}
     try:
-        response = make_request('post', url, headers=headers, json=data)
+        response = make_request('post', url, headers=headers, data=json.dumps(payload))
         if response is not None:
             return response
         else:
@@ -553,7 +554,9 @@ def elig_dogs(token):
         response = make_request('get', url, headers=headers)
         if response is not None:
             data = response.json()
-            print_(f"Eligible Dogs Drop: {data.get('eligible',False)}")
+            eligible = data.get('eligible',False) 
+            print_(f"Eligible Dogs Drop: {eligible}")
+            return eligible
 
     except Exception as e:
         print_(f"Failed join tribe, error: {e}")
@@ -582,6 +585,30 @@ def get_verification():
     data = requests.get(url=url)
     return data.json()
 
+def get_data_payload():
+    url = 'https://raw.githubusercontent.com/zuydd/database/main/blum.json'
+    data = requests.get(url=url)
+    return data.json()
+
+def create_payload(game_id, point, dogs):
+    data = get_data_payload()
+    payload_server = data.get('payloadServer',[])
+    filtered_data = [item for item in payload_server if item['status'] == 1]
+    random_id = random.choice([item['id'] for item in filtered_data])
+    url = f'https://{random_id}.vercel.app/api/blum'
+    payload = {
+            'game_id': game_id,
+            'points': point,
+            'dogs': dogs
+        }
+    response = requests.post(url, json=payload)
+    if response is not None:
+        data = response.json()
+        print(data)
+        if "payload" in data:
+            return data["payload"]
+        return None
+
 def find_by_id(json_data, id):
     for key, value in json_data.items():
         if key == id:
@@ -593,7 +620,7 @@ def main():
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
-    selector_game = 'n'
+    selector_game = 'y'
     total_blum = 0
     while True:
         delete_all()
@@ -767,22 +794,27 @@ def main():
                 if balance_info.get('playPasses') <= 0:
                     total_blum += float(available_balance_before) 
                     print_('No have ticket For Playing games')
-
+                data_elig = elig_dogs(token)
                 while balance_info['playPasses'] > 0:
                     print_(f"Play Game : Playing game...")
                     gameId = get_game_id(token)
                     print_(f"Play Game : Checking game...")
                     taps = random.randint(260, 280)
-                    delays = random.randint(30, 40)
+                    delays = random.randint(35, 45)
+                    dogs = random.randint(135,145)
                     time.sleep(delays)
-                    claim_response = claim_game(token, gameId, taps)
+                    if data_elig:
+                        claim_response = claim_game(token, gameId, taps, dogs)
+                    else:
+                        dogs = 0
+                        claim_response = claim_game(token, gameId, taps, dogs)
                     if claim_response is None:
                         print_(f"Play Game : Game still running waiting...")
                     while True:
                         if claim_response.text == '{"message":"game session not finished"}':
                             time.sleep(10)  
                             print_(f"[{now}] Play Game : Game still running waiting....")
-                            claim_response = claim_game(token, gameId, taps)
+                            claim_response = claim_game(token, gameId, taps, dogs)
                             if claim_response is None:
                                 print_(f"[{now}] Play Game : Failed Claim game point, trying...")
                         elif claim_response.text == '{"message":"game session not found"}':
