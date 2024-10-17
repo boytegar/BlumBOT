@@ -826,7 +826,7 @@ def main():
                             print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
                             continue  
                         else:
-                            print_(f"Play Game : Game is Done: {claim_response.text}")
+                            print_(f"Play Game : Game is Done: Reward {taps} {dogs}")
                             break
 
                     balance_info = get_balance(token) 
