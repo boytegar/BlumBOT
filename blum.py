@@ -799,7 +799,7 @@ def main():
                     print_(f"Play Game : Checking game...")
                     taps = random.randint(260, 280)
                     delays = random.randint(35, 45)
-                    dogs = random.randint(135,145)
+                    dogs = random.randint(70,80)*5
                     time.sleep(delays)
                     if data_elig:
                         claim_response = claim_game(token, gameId, taps, dogs)
