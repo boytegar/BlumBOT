@@ -618,7 +618,7 @@ def main():
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
-    selector_game = 'y'
+    selector_game = input("auto playing game ? y/n  : ").strip().lower()
     total_blum = 0
     while True:
         delete_all()
@@ -979,7 +979,7 @@ def start():
     find new airdrop & bot here: t.me/sansxgroup
               
         select this one :
-        1. claim daily
+        1. claim daily & auto play game
         2. clear task
           
           """)
