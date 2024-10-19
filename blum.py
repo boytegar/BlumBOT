@@ -81,7 +81,7 @@ def print_(word):
     now = datetime.now().isoformat(" ").split(".")[0]
     print(f"[{now}] {word}")
 
-def make_request(method, url, headers, json=None, data=None):
+def make_request(method, url, headers=None, json=None, data=None):
     retry_count = 0
     while True:
         time.sleep(2)
@@ -322,17 +322,19 @@ def claim_game(token, game_id, point, dogs):
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
     data = create_payload(game_id=game_id, point=point, dogs=dogs)
-    payload = {'payload' : data}
-    try:
-        response = make_request('post', url, headers=headers, data=json.dumps(payload))
-        if response is not None:
-            return response
-        else:
-            return None
-    
-    except Exception as e:
-        print_(f"Failed Claim game, error: {e}")
-    return None
+    if data is not None:
+        payload = {'payload' : data}
+        try:
+            response = make_request('post', url, headers=headers, data=json.dumps(payload))
+            if response is not None:
+                return response
+            else:
+                return None
+        
+        except Exception as e:
+            print_(f"Failed Claim game, error: {e}")
+    else:
+        return None
 
 def get_game_id(token):
     game_response = play_game(token)
@@ -586,26 +588,33 @@ def get_verification():
 
 def get_data_payload():
     url = 'https://raw.githubusercontent.com/zuydd/database/main/blum.json'
-    data = requests.get(url=url)
-    return data.json()
+    while True:
+        data = make_request('get',url=url)
+        if data is not None:
+            return data.json()
 
 def create_payload(game_id, point, dogs):
     data = get_data_payload()
     payload_server = data.get('payloadServer',[])
     filtered_data = [item for item in payload_server if item['status'] == 1]
-    random_id = random.choice([item['id'] for item in filtered_data])
-    url = f'https://{random_id}.vercel.app/api/blum'
-    payload = {
-            'game_id': game_id,
-            'points': point,
-            'dogs': dogs
-        }
-    response = requests.post(url, json=payload)
-    if response is not None:
-        data = response.json()
-        if "payload" in data:
-            return data["payload"]
-        return None
+    trys = 5
+    while True:
+        if trys == 0:
+            return None
+        random_id = random.choice([item['id'] for item in filtered_data])
+        url = f'https://{random_id}.vercel.app/api/blum'
+        payload = {
+                'game_id': game_id,
+                'points': point,
+                'dogs': dogs
+            }
+        response = make_request('post', url, json=payload)
+        if response is not None:
+            data = response.json()
+            if "payload" in data:
+                return data["payload"]
+            return None
+        trys -= 1
 
 def find_by_id(json_data, id):
     for key, value in json_data.items():
@@ -807,7 +816,8 @@ def main():
                         dogs = 0
                         claim_response = claim_game(token, gameId, taps, dogs)
                     if claim_response is None:
-                        print_(f"Play Game : Game still running waiting...")
+                        print_(f"Play Game : Skip Game Payload Error")
+                        continue
                     while True:
                         if claim_response.text == '{"message":"game session not finished"}':
                             time.sleep(10)  
