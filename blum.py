@@ -594,18 +594,15 @@ def get_data_payload():
             return data.json()
 
 def create_payload(game_id, point, dogs):
-    data = get_data_payload()
-    payload_server = data.get('payloadServer',[])
-    filtered_data = [item for item in payload_server if item['status'] == 1]
+
     trys = 5
     while True:
         if trys == 0:
             return None
-        random_id = random.choice([item['id'] for item in filtered_data])
-        url = f'https://{random_id}.vercel.app/api/blum'
+        url = f'https://blum-toga-c3d9617e40ff.herokuapp.com/api/game'
         payload = {
-                'game_id': game_id,
-                'points': point,
+                'gameId': game_id,
+                'points': str(point),
                 'dogs': dogs
             }
         response = make_request('post', url, json=payload)
@@ -632,7 +629,7 @@ def main():
     while True:
         delete_all()
         queries = load_credentials()
-        delay_time = random.randint(3600, 3620)*8
+        delay_time = random.randint(3600, 3650)*8
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
         for index, query in enumerate(queries, start=1):
@@ -808,7 +805,7 @@ def main():
                     print_(f"Play Game : Checking game...")
                     taps = random.randint(260, 280)
                     delays = random.randint(35, 45)
-                    dogs = random.randint(25,30)*5
+                    dogs = random.randint(5,20)*0.1
                     time.sleep(delays)
                     if data_elig:
                         claim_response = claim_game(token, gameId, taps, dogs)
