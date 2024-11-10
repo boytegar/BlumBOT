@@ -1,5 +1,3 @@
-# Made with ❤ by @adearman
-# Join tele channel for update t.me/ghalibie
 import argparse
 import random
 from urllib.parse import parse_qs, unquote
@@ -7,8 +5,9 @@ import requests
 from requests.structures import CaseInsensitiveDict
 import time
 from datetime import datetime, timezone
-
-start_time = datetime.now()  # Tentukan waktu mulai saat bot dijalankan
+from payload import get_payload
+from payload.payload import get_payloads
+start_time = datetime.now()
 
 headers = {
         'accept': 'application/json, text/plain, */*',
@@ -26,11 +25,9 @@ headers = {
     }
 
 def load_credentials():
-    # Membaca token dari file dan mengembalikan daftar token
     try:
         with open('query_id.txt', 'r') as f:
             queries = [line.strip() for line in f.readlines()]
-        # print("Token berhasil dimuat.")
         return queries
     except FileNotFoundError:
         print("File query_id.txt tidak ditemukan.")
@@ -310,7 +307,7 @@ def play_game(token):
     except Exception as e:
         print_(f"Failed play game, Error {e}")
 
-def claim_game(token, game_id, point, dogs):
+def claim_game(token, game_id, point, freeze):
     time.sleep(2)
     url = "https://game-domain.blum.codes/api/v2/game/claim"
     headers = CaseInsensitiveDict()
@@ -321,7 +318,7 @@ def claim_game(token, game_id, point, dogs):
     headers["origin"] = "https://telegram.blum.codes"
     headers["priority"] = "u=1, i"
     headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
-    data = create_payload(game_id=game_id, point=point, dogs=dogs)
+    data = get_payloads(game_id, point, freeze)
     if data is not None:
         payload = {'payload' : data}
         try:
@@ -599,7 +596,7 @@ def create_payload(game_id, point, dogs):
     while True:
         if trys == 0:
             return None
-        url = f'https://blum-toga-c3d9617e40ff.herokuapp.com/api/game'
+        url = f'https://server2.ggtog.live/api/game'
         payload = {
                 'gameId': game_id,
                 'points': str(point),
@@ -629,7 +626,7 @@ def main():
     while True:
         delete_all()
         queries = load_credentials()
-        delay_time = random.randint(3600, 3650)*8
+        delay_time = random.randint(3700, 3750)*8
         start_time = time.time()
         now = datetime.now().isoformat(" ").split(".")[0]
         for index, query in enumerate(queries, start=1):
@@ -734,7 +731,7 @@ def main():
                 else:
                     print_(f"Daily Reward : Failed Check Daily Reward. {daily_reward_response}")
 
-            elig_dogs(token)
+            # elig_dogs(token)
             print_(f"Reff Balance : Checking reff balance...")
             if claim_ref_enable == 'y':
                 friend_balance = check_balance_friend(token)
@@ -775,7 +772,7 @@ def main():
                 waktu_tunggu = delay_time - (mid_time-start_time)
                 if waktu_tunggu <= 0:
                     break
-                time.sleep(3)
+                time.sleep(2)
                 parse = parse_query(query)
                 user = parse.get('user')
                 token = get(user['id'])
@@ -798,28 +795,34 @@ def main():
                 if balance_info.get('playPasses') <= 0:
                     total_blum += float(available_balance_before) 
                     print_('No have ticket For Playing games')
-                data_elig = elig_dogs(token)
+                # data_elig = elig_dogs(token)
                 while balance_info['playPasses'] > 0:
                     print_(f"Play Game : Playing game...")
                     gameId = get_game_id(token)
                     print_(f"Play Game : Checking game...")
-                    taps = random.randint(260, 280)
-                    delays = random.randint(35, 45)
-                    dogs = random.randint(5,20)*0.1
+                    taps = random.randint(330, 400)
+                    delays = random.randint(31, 35)
+                    freeze = random.randint(4,8)
+                    delays += (freeze*5)
+                    # dogs = random.randint(20,30)*0.1
                     time.sleep(delays)
-                    if data_elig:
-                        claim_response = claim_game(token, gameId, taps, dogs)
-                    else:
-                        dogs = 0
-                        claim_response = claim_game(token, gameId, taps, dogs)
+                    # if data_elig:
+                    #     claim_response = claim_game(token, gameId, taps, dogs)
+                    # else:
+                    #     dogs = 0
+                    claim_response = claim_game(token, gameId, taps, freeze)
                     if claim_response is None:
                         print_(f"Play Game : Skip Game Payload Error")
                         continue
                     while True:
+                        mid_time = time.time()
+                        waktu_tunggu = delay_time - (mid_time-start_time)
+                        if waktu_tunggu <= 0:
+                            break
                         if claim_response.text == '{"message":"game session not finished"}':
                             time.sleep(10)  
                             print_(f"[{now}] Play Game : Game still running waiting....")
-                            claim_response = claim_game(token, gameId, taps, dogs)
+                            claim_response = claim_game(token, gameId, taps, 0)
                             if claim_response is None:
                                 print_(f"[{now}] Play Game : Failed Claim game point, trying...")
                         elif claim_response.text == '{"message":"game session not found"}':
@@ -833,7 +836,7 @@ def main():
                             print_(f"[{now}] Play Game : Token Not Valid, Take new token...")
                             continue  
                         else:
-                            print_(f"Play Game : Game is Done, Reward Blum Point : {taps} , Dogs : {dogs}")
+                            print_(f"Play Game : Game is Done, Reward Blum Point : {taps}")
                             break
 
                     balance_info = get_balance(token) 
