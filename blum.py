@@ -1,28 +1,13 @@
 import argparse
 import random
 from urllib.parse import parse_qs, unquote
-import requests
-from requests.structures import CaseInsensitiveDict
+import cloudscraper
 import time
 from datetime import datetime, timezone
 from payload import get_payload
 from payload.payload import get_payloads
 start_time = datetime.now()
-
-headers = {
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'priority': 'u=1, i',
-        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
-    }
+requests = cloudscraper.create_scraper()
 
 def load_credentials():
     try:
@@ -119,11 +104,20 @@ def check_tasks(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     
     response = requests.get('https://game-domain.blum.codes/api/v1/tasks', headers=headers)
@@ -172,11 +166,20 @@ def start_task(token, task_id, title):
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/start'
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('post', url, headers=headers)
@@ -193,11 +196,20 @@ def validate_task(token, task_id, title, word=None):
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/validate'
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     payload = {'keyword': word}
     try:
@@ -216,11 +228,20 @@ def claim_task(token, task_id,title):
     url = f'https://earn-domain.blum.codes/api/v1/tasks/{task_id}/claim'
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response =  response = make_request('post',url, headers=headers)
@@ -235,19 +256,28 @@ def claim_task(token, task_id,title):
 def get_new_token(query_id):
     import json
     # Header untuk permintaan HTTP
+    data = json.dumps({"query": query_id, "referralToken":'z2MpJGToqt'})
     headers = {
-        "accept": "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9",
-        "content-type": "application/json",
-        "origin": "https://telegram.blum.codes",
-        "priority": "u=1, i",
-        "referer": "https://telegram.blum.codes/"
+        'Content-Length': str(len(data)),
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
 
-    data = json.dumps({"query": query_id})
+    
     url = "https://user-domain.blum.codes/api/v1/auth/provider/PROVIDER_TELEGRAM_MINI_APP"
     time.sleep(2)
-    print_(f"Getting Token...")
+    print_(f"Getting Tokenss...")
     response = make_request('post',url, headers=headers, data=data)
     if response is not None:
         print_(f"Token Created")
@@ -262,10 +292,20 @@ def get_user_info(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     response =  response = make_request('get','https://gateway.blum.codes/v1/user/me', headers=headers)
     if response is not None:
@@ -274,10 +314,20 @@ def get_user_info(token):
 def get_balance(token):
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response =  response = make_request('get','https://game-domain.blum.codes/api/v1/user/balance', headers=headers)
@@ -292,11 +342,20 @@ def play_game(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'content-length': '0',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('post','https://game-domain.blum.codes/api/v2/game/play', headers=headers)
@@ -310,14 +369,24 @@ def play_game(token):
 def claim_game(token, game_id, point, freeze):
     time.sleep(2)
     url = "https://game-domain.blum.codes/api/v2/game/claim"
-    headers = CaseInsensitiveDict()
-    headers["accept"] = "application/json, text/plain, */*"
-    headers["accept-language"] = "en-US,en;q=0.9"
-    headers["authorization"] = "Bearer "+token
-    headers["content-type"] = "application/json"
-    headers["origin"] = "https://telegram.blum.codes"
-    headers["priority"] = "u=1, i"
-    headers["user-agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0"
+
+    headers = {
+        'Authorization': f'Bearer {token}',
+       
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
+    }
     data = get_payloads(game_id, point, freeze)
     if data is not None:
         payload = {'payload' : data}
@@ -359,11 +428,20 @@ def claim_balance(token):
     
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         time.sleep(2)
@@ -381,11 +459,20 @@ def start_farming(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
  
@@ -404,17 +491,20 @@ def check_balance_friend(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'priority': 'u=1, i',
-        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+       
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('get', 'https://user-domain.blum.codes/api/v1/friends/balance', headers=headers)
@@ -431,11 +521,20 @@ def claim_balance_friend(token):
     time.sleep(2)
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-length': '0',
-        'origin': 'https://telegram.blum.codes',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('post', 'https://user-domain.blum.codes/api/v1/friends/claim', headers=headers)
@@ -452,17 +551,20 @@ import json
 def check_daily_reward(token):
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'content-length': '0',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
-        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('post','https://game-domain.blum.codes/api/v1/daily-reward?offset=-420', headers=headers)
@@ -470,7 +572,7 @@ def check_daily_reward(token):
             return response.json()
         else:
             return None
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         return None
       
     return None
@@ -480,17 +582,20 @@ def check_tribe(token):
     url = 'https://game-domain.blum.codes/api/v1/tribe/my'
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'content-length': '0',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
-        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('get', url, headers=headers)
@@ -507,17 +612,20 @@ def join_tribe(token):
     url ='https://game-domain.blum.codes/api/v1/tribe/a8e9ee05-b615-4c46-812c-1f8c5a42f93e/join'
     headers = {
         'Authorization': f'Bearer {token}',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-US,en;q=0.9',
-        'origin': 'https://telegram.blum.codes',
-        'content-length': '0',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
-        'sec-ch-ua': '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24", "Microsoft Edge WebView2";v="125"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site'
+        
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Priority': "u=1, i",
+        'Origin': 'https://telegram.blum.codes',
+        "Lang": "en",
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'Sec-Ch-Ua-mobile': '?1',
+        'Sec-Ch-Ua-platform': '"Android"',
+        'content-type' :'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
     }
     try:
         response = make_request('post', url, headers=headers)
@@ -929,7 +1037,7 @@ def task_main():
                 'accept-language': 'en-US,en;q=0.9',
                 'content-length': '0',
                 'origin': 'https://telegram.blum.codes',
-                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
+                'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1'
             }
     
             response = make_request('get','https://earn-domain.blum.codes/api/v1/tasks', headers=headers)
