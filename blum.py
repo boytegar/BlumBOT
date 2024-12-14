@@ -725,7 +725,7 @@ def find_by_id(json_data, id):
     return None
 
 def main():
-
+    delete_all()
     claim_ref_enable = input("want claim ref? y/n  : ").strip().lower()      
     # check_task_enable = input("want claim task? y/n  : ").strip().lower()
     check_task_enable = 'n'
